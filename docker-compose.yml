@@ -1,0 +1,27 @@
+services:
+  hackaton-dipfin:
+    image: ${HACKATON_DIPFIN_IMAGE:-hackaton-dipfin:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ${ENV_FILE:-.env}
+    environment:
+      APP_ADDRESS: "0.0.0.0"
+      APP_PORT: "8080"
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen(
+          "http://127.0.0.1:8080/health", timeout=5).close()
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s

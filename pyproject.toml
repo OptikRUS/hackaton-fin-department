@@ -1,0 +1,93 @@
+[project]
+name = "hackaton-dipfin"
+version = "0.1.0"
+description = "Hackaton Dipfin service"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "dishka>=1.7.2",
+    "fastapi>=0.121.0,<1.0.0",
+    "httpx2>=2.0.0,<3.0.0",
+    "pydantic-settings>=2.11.0,<3.0.0",
+    "uvicorn>=0.35.0,<1.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2,<9.0.0",
+    "pytest-asyncio>=1.0.0,<2.0.0",
+    "pytest-cov>=7.0.0,<8.0.0",
+    "ruff>=0.15.0,<1.0.0",
+    "ty>=0.0.65",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["src/tests"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/tests/*", "src/main.py"]
+
+[tool.coverage.report]
+omit = ["src/tests/*", "src/main.py"]
+exclude_lines = ["raise AssertionError", "raise NotImplementedError"]
+
+[tool.ty.environment]
+root = ["."]
+python-version = "3.14"
+
+[tool.ty.rules]
+all = "error"
+missing-override-decorator = "ignore"
+
+[tool.ty.analysis]
+strict-literal-narrowing = true
+
+[tool.ty.src]
+include = ["src"]
+
+[tool.ruff]
+target-version = "py314"
+src = ["src"]
+exclude = [".venv"]
+line-length = 100
+show-fixes = true
+output-format = "concise"
+
+[tool.ruff.format]
+preview = true
+line-ending = "auto"
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+ignore = [
+    "D",
+    "RUF001",
+    "RUF012",
+    "FIX",
+    "TD002",
+    "TD003",
+    "COM812",
+    "CPY001",
+    "TC001",
+    "TC002",
+    "TC003",
+]
+select = ["ALL"]
+unfixable = ["E711", "E712"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/tests/*" = ["S101", "S106", "FBT", "ARG002", "PT004", "ANN201", "PLR2004"]
+
+[tool.ruff.lint.pylint]
+max-args = 6
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["id", "type"]
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = ["pydantic.model_validator", "pydantic.field_validator"]
