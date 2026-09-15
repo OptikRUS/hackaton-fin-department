@@ -1,7 +1,6 @@
 # hackaton-fin-department
 
-HTTP-каркас на Python 3.14, FastAPI и Dishka, перенесённый из
-`cpa-offers-catalog`. Версия приложения — `0.1.0`.
+HTTP-каркас на Python 3.14, FastAPI и Dishka. Версия приложения — `0.1.0`.
 
 ## Локальный запуск
 
@@ -44,7 +43,7 @@ docker compose down
 ```
 
 Compose запускает один сервис `hackaton-fin-department` и проверяет `/health`.
-Имя образа можно задать через `HACKATON_DIPFIN_IMAGE`, путь к файлу
+Имя образа можно задать через `HACKATON_FIN_DEPARTMENT_IMAGE`, путь к файлу
 окружения — через `ENV_FILE`.
 
 ## Проверки
@@ -58,7 +57,7 @@ uv run ruff format --check src
 ```
 
 `make fix` исправляет форматирование и замечания Ruff.
-`make quality` выполняет lint, types, fix и tests, как в референсе.
+`make quality` выполняет lint, types, fix и tests.
 
 ## Структура
 

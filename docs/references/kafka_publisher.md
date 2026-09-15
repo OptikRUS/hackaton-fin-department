@@ -4,8 +4,8 @@
 
 Kafka не подключена: ни consumer, ни publisher, ни broker lifecycle в каркасе нет.
 
-Ниже сохранён переносимый паттерн из исходного набора references. Это пример для будущего
-расширения, а не существующие классы, пути или обязательство добавить подсистему. Imports могут
+Ниже приведён паттерн для будущего расширения, а не существующие классы, пути
+или обязательство добавить подсистему. Imports могут
 быть опущены; вспомогательные типы и методы нужно определить под выбранный контракт.
 `Entity*` в разных документах показывает роли, а не единую готовую модель проекта.
 
@@ -183,7 +183,7 @@ Broker-backed assertion фиксирует decoded payload и topic через �
 подтверждается project-native способ наблюдать raw record или producer command; такой тест не
 изобретается внутри адаптации этого шаблона.
 
-При переносе этого шаблона нужно одновременно подтвердить core event, topic, key,
+При применении этого шаблона нужно одновременно подтвердить core event, topic, key,
 wire fields and aliases, error detail, аддитивное broker router inclusion, сохранение существующего
 Dishka/FastStream test wiring, DI registration, producer/consumer coupling и literal transport test.
 Нельзя добавлять только `router.publisher()` без остальной цепочки.

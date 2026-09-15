@@ -3,7 +3,7 @@
 ## pyproject.toml
 
 [pyproject.toml](../../pyproject.toml) задаёт Python `>=3.14,<3.15`, имя пакета
-`hackaton-dipfin` и версию `0.1.0`. Runtime-имя приложения сейчас `hackaton-fin-department`.
+`hackaton-fin-department` и версию `0.1.0`. Имя приложения — `hackaton-fin-department`.
 Зависимости: Dishka, FastAPI, httpx2, Pydantic Settings, Uvicorn. Dev-инструменты:
 pytest, pytest-asyncio, pytest-cov, Ruff, ty. Зафиксированные версии — в [uv.lock](../../uv.lock).
 

@@ -1,6 +1,6 @@
 services:
-  hackaton-dipfin:
-    image: ${HACKATON_DIPFIN_IMAGE:-hackaton-dipfin:local}
+  hackaton-fin-department:
+    image: ${HACKATON_FIN_DEPARTMENT_IMAGE:-hackaton-fin-department:local}
     build:
       context: .
       dockerfile: Dockerfile

@@ -76,5 +76,5 @@ constants = Constants()
 ```
 
 `constants.DIRS.ROOT` указывает на корень текущего проекта; `SRC` — на его каталог `src`.
-Группы AUTH, POSTGRES, CLICKHOUSE, EMAIL, CPA_GATEWAY и KAFKA отсутствуют.
+Дополнительные группы настроек пока не реализованы.
 Будущий PostgreSQL-паттерн — [postgres_settings.md](postgres_settings.md).
