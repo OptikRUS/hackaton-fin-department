@@ -1,4 +1,4 @@
-# hackaton-dipfin
+# hackaton-fin-department
 
 HTTP-каркас на Python 3.14, FastAPI и Dishka, перенесённый из
 `cpa-offers-catalog`. Версия приложения — `0.1.0`.
