@@ -43,7 +43,7 @@ curl -i http://127.0.0.1:8080/health
 docker compose down
 ```
 
-Compose запускает один сервис `hackaton-dipfin` и проверяет `/health`.
+Compose запускает один сервис `hackaton-fin-department` и проверяет `/health`.
 Имя образа можно задать через `HACKATON_DIPFIN_IMAGE`, путь к файлу
 окружения — через `ENV_FILE`.
 

@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class AppSettings(BaseSettings):
-    NAME: str = "hackaton-dipfin"
+    NAME: str = "hackaton-fin-department"
     ADDRESS: str = "127.0.0.1"
     PORT: int = 8080
     VERSION: ClassVar[str] = "0.1.0"
