@@ -2,7 +2,7 @@ name: Quality
 
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -55,6 +55,9 @@ jobs:
   tests:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
     env:
       POSTGRES_HOST: 127.0.0.1
       POSTGRES_PORT: '5432'
@@ -78,7 +81,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: true # Required by python-coverage-comment-action v3.
       - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           version: '0.12.14'
@@ -90,6 +94,11 @@ jobs:
         run: |
           uv run coverage erase
           make tests-coverage
+      - name: Publish coverage report
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: py-cov-action/python-coverage-comment-action@50d15ff8768f6d897b04e5a0805bd1a98f7096c4 # v3
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
       - name: Export coverage
         if: ${{ !cancelled() }}
         run: |

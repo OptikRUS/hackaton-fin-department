@@ -86,11 +86,16 @@ Session fixture применяет миграции перед тестами и
 
 ## CI/CD
 
-Workflow **Quality** запускается на push во все ветки, PR в `main` и вручную.
+Workflow **Quality** запускается на push в `main`, PR в `main` и вручную.
+Push в ветку PR не создаёт второй запуск тех же проверок.
 Он проверяет Ruff, форматирование и ty, выполняет BDD и pytest с coverage на
 изолированной PostgreSQL 17.11, затем собирает образ для Linux amd64.
 Python — 3.14, uv — 0.12.14; зависимости устанавливаются строго по `uv.lock`.
 XML- и HTML-отчёты coverage доступны в artifacts запуска в течение 14 дней.
+Шаг `Publish coverage report` публикует coverage-комментарий в PR из этого
+репозитория и сохраняет базовый отчёт после push в `main`. Для PR из forks
+доступны artifacts без публикации комментария. Как и в `gym-master`, запуск
+`make tests-coverage` и публикация отчёта находятся внутри job `tests`.
 
 Только успешный **push в `main`** публикует образ в Docker Hub с тегами
 `sha-<полный SHA коммита>` и `latest`. PR, другие ветки и ручной запуск Quality
