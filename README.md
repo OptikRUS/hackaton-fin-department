@@ -84,6 +84,96 @@ POSTGRES_HOST=localhost uv run --env-file .env make tests
 Session fixture применяет миграции перед тестами и откатывает схему до `base`
 после завершения.
 
+## CI/CD
+
+Workflow **Quality** запускается на push во все ветки, PR в `main` и вручную.
+Он проверяет Ruff, форматирование и ty, выполняет BDD и pytest с coverage на
+изолированной PostgreSQL 17.11, затем собирает образ для Linux amd64.
+Python — 3.14, uv — 0.12.14; зависимости устанавливаются строго по `uv.lock`.
+XML- и HTML-отчёты coverage доступны в artifacts запуска в течение 14 дней.
+
+Только успешный **push в `main`** публикует образ в Docker Hub с тегами
+`sha-<полный SHA коммита>` и `latest`. PR, другие ветки и ручной запуск Quality
+не используют Docker Hub Secrets и не публикуют образы. Actions закреплены SHA.
+
+### Настройка GitHub
+
+В **Settings → Secrets and variables → Actions** добавьте repository Variables:
+
+| Variable             | Значение                                             |
+|----------------------|------------------------------------------------------|
+| `DOCKERHUB_USERNAME` | Пользователь Docker Hub                              |
+| `DOCKERHUB_REPONAME` | Имя репозитория образа без пользователя              |
+| `APP_PORT`           | Необязательно: внешний порт API, по умолчанию `8080` |
+
+Repository Secrets:
+
+| Secret                   | Назначение                                                     |
+|--------------------------|----------------------------------------------------------------|
+| `DOCKERHUB_TOKEN`        | Docker Hub access token с правами pull/push                    |
+| `SERVER_HOST`            | IP или DNS-имя VPS                                             |
+| `SERVER_PORT`            | SSH-порт, например `22`                                        |
+| `SERVER_USERNAME`        | SSH-пользователь с доступом к Docker                           |
+| `SERVER_SSH_PRIVATE_KEY` | Закрытый SSH-ключ этого пользователя                           |
+| `SSH_KNOWN_HOSTS`        | Проверенная запись ключа сервера в формате OpenSSH known_hosts |
+| `POSTGRES_USER`          | Пользователь production-БД                                     |
+| `POSTGRES_PASSWORD`      | Пароль production-БД                                           |
+| `POSTGRES_NAME`          | Имя production-БД                                              |
+
+Для нестандартного SSH-порта known_hosts должен содержать `[host]:port`.
+Проверьте fingerprint ключа через доверенный доступ к VPS; workflow не принимает
+неизвестные ключи автоматически. Значения настроек БД должны быть однострочными.
+Текущий код формирует DSN строкой: выбирайте имя пользователя, имя БД и пароль
+без URL-разделителей; для пароля подходит длинная случайная строка из букв,
+цифр, `-` и `_`.
+
+### Первый деплой
+
+На VPS Linux amd64 установите Docker Engine и Compose v2 с поддержкой `--wait`.
+SSH-пользователю нужны доступ к Docker и права записи в
+`/opt/hackaton-fin-department`. Создайте этот каталог с владельцем — пользователем
+деплоя и правами `0700`. Порты `5432` на loopback и выбранный порт API должны
+быть свободны; для внешнего доступа разрешите порт API в firewall.
+
+1. Настройте Variables и Secrets, затем дождитесь успешного Quality после push в `main`.
+2. Откройте **Actions → Deploy → Run workflow**, выберите ветку `main`.
+3. Оставьте `commit_sha` пустым для текущего `main` или укажите полный SHA ранее
+   опубликованного коммита из истории `main`.
+
+До SSH workflow проверяет успешный запуск Quality и шаг публикации выбранного
+коммита. Compose берётся из этого же коммита; тег образа разрешается в digest,
+и сервер запускает именно `repository@sha256:…`. Образ и коммит видны в summary.
+
+Настройки передаются по SSH в `.env` с правами `0600`. Docker Hub token
+используется через stdin и временный Docker config, который удаляется после
+деплоя. Приложение подключается к `hackaton-fin-postgres:5432`; PostgreSQL
+публикуется только на loopback VPS, данные хранятся в постоянном volume проекта
+`hackaton-fin-department`.
+
+Сервер скачивает образ, ждёт готовности PostgreSQL, выполняет `make migrate`
+одноразовым контейнером и обновляет API без сборки. Успех требует прохождения
+`/health` за 180 секунд. Этот endpoint проверяет доступность HTTP-сервиса;
+миграции отдельно проверяют доступность БД. Ошибка миграции останавливает
+обновление API, ошибка healthcheck делает деплой неуспешным.
+
+Деплои не прерывают друг друга: GitHub допускает один активный и один ожидающий
+запуск в concurrency group; новый ожидающий запуск может заменить предыдущий.
+Для диагностики на сервере:
+
+```bash
+cd /opt/hackaton-fin-department
+docker compose -p hackaton-fin-department --env-file .env ps
+docker compose -p hackaton-fin-department --env-file .env logs --tail=100 hackaton-fin-department
+```
+
+Повторный запуск Deploy с предыдущим SHA возвращает предыдущий образ, если он
+доступен в Docker Hub и совместим с текущей схемой БД. Автоматического отката
+схемы нет. Миграции должны сохранять совместимость с работающей версией API.
+Изменение PostgreSQL Secrets не меняет пароль или имя уже созданной БД внутри
+существующего volume: такие изменения требуют отдельной процедуры в PostgreSQL.
+Настройка GitHub/VPS и первый production-деплой выполняются отдельно от локальной
+проверки конфигурации.
+
 ## Структура
 
 - `src/config` — настройки приложения, CORS и путей.
