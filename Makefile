@@ -1,10 +1,11 @@
 .PHONY: tests
 tests:
-	uv run pytest -vv -x
+	uv run behave --tags=-skip --stop && uv run pytest -vv -x
 
 .PHONY: tests-coverage
 tests-coverage:
-	uv run coverage run -m pytest && \
+	uv run coverage run -m behave --tags=-skip && \
+	uv run coverage run -a -m pytest && \
 	uv run coverage report
 
 .PHONY: lint
@@ -21,3 +22,15 @@ fix:
 
 .PHONY: quality
 quality: lint types fix tests
+
+.PHONY: migrate
+migrate:
+	uv run alembic -c src/infra/migrations/alembic.ini upgrade heads
+
+.PHONY: downgrade
+downgrade:
+	uv run alembic -c src/infra/migrations/alembic.ini downgrade -1
+
+.PHONY: migrations
+migrations:
+	uv run alembic -c src/infra/migrations/alembic.ini revision --autogenerate -m "$(message)"
