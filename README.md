@@ -47,7 +47,10 @@ curl -X POST http://127.0.0.1:8080/api/pets \
 Успешный запрос возвращает HTTP 201 и `{"id":"<uuid.hex>"}`. Начальный баланс
 питомца равен `100`.
 
-## Docker
+## Docker (только локальная разработка)
+
+Прод-деплой — не отсюда: образ собирает CI в Harbor, катит FluxCD
+(см. «Деплой» ниже). Compose — для локального прогона:
 
 ```bash
 cp .env.example .env
@@ -84,13 +87,31 @@ POSTGRES_HOST=localhost uv run --env-file .env make tests
 Session fixture применяет миграции перед тестами и откатывает схему до `base`
 после завершения.
 
-## Структура
+## CI/CD
 
-- `src/config` — настройки приложения, CORS и путей.
-- `src/core` — доменные enum, params, storage-контракты и use cases.
-- `src/di` — контейнер Dishka и общие providers.
-- `src/infra/api` — создание FastAPI-приложения, маршруты и HTTP-ошибки.
-- `src/infra/storages/postgres` — SQLAlchemy models и storage.
-- `src/infra/migrations` — Alembic configuration, commands и revisions.
-- `src/main.py` — запуск Uvicorn и lifecycle контейнера.
-- `src/tests` — API-тесты, фикстуры и HTTP-helper.
+CI — GitHub Actions (`.github/workflows/ci.yml`), три job'а:
+
+1. **Quality** — `lint` (ruff), `types` (mypy), `tests` (pytest + coverage,
+   Postgres 17 как service-контейнер, миграции применяются в фикстуре).
+2. **image** — только после зелёных проверок и только для push в `main`:
+   сборка и публикация образа в Harbor с тегом
+
+   ```
+   registry.mortypython.ru/fin/hackaton-fin-department:main-<UTC YYYYMMDDhhmmss>-<sha12>
+   ```
+
+   Таймстамп обязателен: деплой-контроллер выбирает тег численной сортировкой
+   по `<ts>`, а `sha` хронологию не даёт.
+
+CD — FluxCD в кластере (репозиторий `fin-department-k8s`):
+
+- `ImageRepository`/`ImagePolicy` следят за Harbor и выбирают свежий `main-*` тег
+- `ImageUpdateAutomation` коммитит тег в манифесты → Flux перекатывает под
+- миграции (`make migrate`) выполняются в init-контейнере до старта приложения
+
+Ручных шагов деплоя нет: смержил PR в `main` → через пару минут новая версия
+на `https://api.mortypython.ru`.
+
+Настройки репозитория: secrets/vars `HARBOR_USERNAME`, `HARBOR_TOKEN`
+(robot-аккаунт Harbor проекта `fin` с правами Pull+Push).
+Полная инфраструктурная схема — `fin-department-k8s/AGENTS.md`.

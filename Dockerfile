@@ -1,8 +1,8 @@
 FROM astral/uv:python3.14-trixie-slim AS builder
 
-ENV UV_VENV_PATH=/build/.venv
+ENV UV_PROJECT_ENVIRONMENT=/project/.venv
 
-WORKDIR /build
+WORKDIR /project
 
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-cache --all-extras --no-install-project
@@ -24,7 +24,7 @@ WORKDIR $APP_PATH
 
 RUN apt-get update && apt-get -y install make --no-install-recommends
 
-COPY --from=builder /build/.venv ./.venv
+COPY --from=builder /project/.venv ./.venv
 COPY . ./
 USER $CUSTOM_USER:$CUSTOM_USER
 
