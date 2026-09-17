@@ -36,6 +36,23 @@ curl -i http://127.0.0.1:8080/health
 и не отображается в OpenAPI. Внешние сервисы не требуются.
 Swagger UI доступен по `/docs`.
 
+## Наблюдаемость
+
+Трейсы — OpenTelemetry SDK, экспорт OTLP gRPC в Jaeger (в кластере:
+`http://jaeger-collector.jaeger.svc.cluster.local:4317`, span'ы запросов
+FastAPI и SQL-запросов SQLAlchemy). `/health` и `/metrics` из трейсов
+исключены. Недоступный коллектор приложению не мешает — экспортер просто
+логирует ошибки.
+
+Метрики — OTel SDK с Prometheus-ридером, `GET /metrics` в формате Prometheus.
+В кластере их собирает PodMonitor `hackaton-fin-department`
+(репозиторий `fin-department-k8s`).
+
+Настройки (префикс `OTEL_`):
+
+- `OTEL_ENDPOINT` — OTLP gRPC endpoint, по умолчанию `http://localhost:4317`
+- `OTEL_TIMEOUT` — таймаут экспорта в секундах, по умолчанию `10`
+
 ## Создание питомца
 
 ```bash

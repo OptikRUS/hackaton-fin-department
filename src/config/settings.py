@@ -39,10 +39,18 @@ class PostgresSettings(BaseSettings):
         )
 
 
+class OTelSettings(BaseSettings):
+    ENDPOINT: str = "http://localhost:4317"
+    TIMEOUT: int = 10
+
+    model_config = SettingsConfigDict(env_prefix="OTEL_")
+
+
 class Settings(BaseSettings):
     APP: AppSettings = AppSettings()
     CORS: CORSSettings = CORSSettings()
     POSTGRES: PostgresSettings = PostgresSettings()
+    OTEL: OTelSettings = OTelSettings()
 
 
 settings = Settings()
