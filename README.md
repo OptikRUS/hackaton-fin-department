@@ -87,8 +87,31 @@ POSTGRES_HOST=localhost uv run --env-file .env make tests
 Session fixture применяет миграции перед тестами и откатывает схему до `base`
 после завершения.
 
-## Деплой
+## CI/CD
 
-CI (GitHub Actions) собирает образ в Harbor на каждый push в `main`
-(секреты: `HARBOR_USERNAME`, `HARBOR_TOKEN`). Деплой — FluxCD, без ручных шагов.
-Настройка и схема: репозиторий `fin-department-k8s`, файл `AGENTS.md`.
+CI — GitHub Actions (`.github/workflows/ci.yml`), три job'а:
+
+1. **Quality** — `lint` (ruff), `types` (mypy), `tests` (pytest + coverage,
+   Postgres 17 как service-контейнер, миграции применяются в фикстуре).
+2. **image** — только после зелёных проверок и только для push в `main`:
+   сборка и публикация образа в Harbor с тегом
+
+   ```
+   registry.mortypython.ru/fin/hackaton-fin-department:main-<UTC YYYYMMDDhhmmss>-<sha12>
+   ```
+
+   Таймстамп обязателен: деплой-контроллер выбирает тег численной сортировкой
+   по `<ts>`, а `sha` хронологию не даёт.
+
+CD — FluxCD в кластере (репозиторий `fin-department-k8s`):
+
+- `ImageRepository`/`ImagePolicy` следят за Harbor и выбирают свежий `main-*` тег
+- `ImageUpdateAutomation` коммитит тег в манифесты → Flux перекатывает под
+- миграции (`make migrate`) выполняются в init-контейнере до старта приложения
+
+Ручных шагов деплоя нет: смержил PR в `main` → через пару минут новая версия
+на `https://api.mortypython.ru`.
+
+Настройки репозитория: secrets/vars `HARBOR_USERNAME`, `HARBOR_TOKEN`
+(robot-аккаунт Harbor проекта `fin` с правами Pull+Push).
+Полная инфраструктурная схема — `fin-department-k8s/AGENTS.md`.
