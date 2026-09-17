@@ -189,3 +189,47 @@ docker compose -p hackaton-fin-department --env-file .env logs --tail=100 hackat
 - `src/infra/migrations` — Alembic configuration, commands и revisions.
 - `src/main.py` — запуск Uvicorn и lifecycle контейнера.
 - `src/tests` — API-тесты, фикстуры и HTTP-helper.
+
+## CI/CD
+
+CI — GitHub Actions (`.github/workflows/ci.yml`), CD — FluxCD в кластере
+`fin-department` (репозиторий `fin-department-k8s`).
+
+### CI (Quality + image)
+
+Пуш в `main` запускает workflow **Quality**:
+
+1. `lint`, `types`, `tests` (pytest + coverage, Postgres 17 как service)
+2. job `image` — сборка и пуш образа в Harbor:
+
+```
+registry.mortypython.ru/fin/hackaton-fin-department:main-<UTC YYYYMMDDhhmmss>-<sha12>
+```
+
+Таймстамп в теге обязателен: Flux `ImagePolicy` сортирует теги численно по
+`<ts>` и деплоит старший (`sha` нельзя отсортировать по времени).
+
+Требуемые настройки репозитория (Settings → Secrets and variables → Actions):
+
+| Тип | Имя | Что это |
+|---|---|---|
+| Variable | `HARBOR_USERNAME` | robot-аккаунт Harbor (`robot$fin+ci`) |
+| Secret | `HARBOR_TOKEN` | его secret |
+
+### CD (Flux)
+
+Кластер сам следит за Harbor (`ImageRepository` + `ImagePolicy` в
+`fin-department-k8s/apps/hackaton-fin-department/`): новый тег →
+`ImageUpdateAutomation` коммитит его в `deployment.yaml` → Flux перекатывает
+под. Миграции запускаются в init-контейнере (`make migrate`) до старта
+приложения.
+
+Ручных шагов деплоя нет: смержил в `main` — образ собрался — задеплоился.
+
+### Инфраструктура приложения
+
+| Что | Где |
+|---|---|
+| Postgres | CNPG-кластер `infra-db` (ns `postgres`), БД `hackaton_fin_department` |
+| Пароль БД | Vault `secret/database/hackaton-fin` → ExternalSecret |
+| HTTP | `https://api.mortypython.ru` (Istio gateway, SAN в серте `fin-tls`) |
