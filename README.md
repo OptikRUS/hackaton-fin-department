@@ -7,7 +7,7 @@
 | src/\_\_init\_\_.py                                 |        0 |        0 |    100% |           |
 | src/config/\_\_init\_\_.py                          |        0 |        0 |    100% |           |
 | src/config/constants.py                             |        9 |        0 |    100% |           |
-| src/config/settings.py                              |       30 |        0 |    100% |           |
+| src/config/settings.py                              |       35 |        0 |    100% |           |
 | src/core/\_\_init\_\_.py                            |        0 |        0 |    100% |           |
 | src/core/pets/\_\_init\_\_.py                       |        0 |        0 |    100% |           |
 | src/core/pets/schemas.py                            |        7 |        0 |    100% |           |
@@ -22,7 +22,7 @@
 | src/di/providers/postgres.py                        |       19 |        8 |     58% | 14-20, 24 |
 | src/infra/\_\_init\_\_.py                           |        0 |        0 |    100% |           |
 | src/infra/api/\_\_init\_\_.py                       |        0 |        0 |    100% |           |
-| src/infra/api/app.py                                |       15 |        0 |    100% |           |
+| src/infra/api/app.py                                |       29 |        0 |    100% |           |
 | src/infra/api/boundary.py                           |       17 |        3 |     82% |19, 23, 26 |
 | src/infra/api/common/\_\_init\_\_.py                |        0 |        0 |    100% |           |
 | src/infra/api/common/endpoints.py                   |        5 |        0 |    100% |           |
@@ -36,12 +36,15 @@
 | src/infra/migrations/env.py                         |       40 |        9 |     78% |25-29, 36-43, 74 |
 | src/infra/migrations/versions/0001\_create\_pets.py |       11 |        0 |    100% |           |
 | src/infra/migrations/versions/\_\_init\_\_.py       |        0 |        0 |    100% |           |
+| src/infra/observability/\_\_init\_\_.py             |        0 |        0 |    100% |           |
+| src/infra/observability/metrics.py                  |       14 |        0 |    100% |           |
+| src/infra/observability/tracing.py                  |       12 |        0 |    100% |           |
 | src/infra/storages/\_\_init\_\_.py                  |        0 |        0 |    100% |           |
 | src/infra/storages/postgres/\_\_init\_\_.py         |        0 |        0 |    100% |           |
 | src/infra/storages/postgres/config.py               |        4 |        0 |    100% |           |
 | src/infra/storages/postgres/models.py               |       19 |        0 |    100% |           |
 | src/infra/storages/postgres/pet\_storage.py         |       12 |        0 |    100% |           |
-| **TOTAL**                                           |  **280** |   **24** | **91%** |           |
+| **TOTAL**                                           |  **325** |   **24** | **93%** |           |
 
 
 ## Setup coverage badge
