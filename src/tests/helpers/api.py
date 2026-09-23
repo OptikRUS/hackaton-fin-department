@@ -10,6 +10,9 @@ class APIHelper:
     async def get_health(self) -> Response:
         return await self.client.get(url="/health")
 
+    async def get_parent_report(self, *, pet_id: str) -> Response:
+        return await self.client.get(url=f"/api/parents/{pet_id}")
+
     async def create_pet(
         self,
         *,
