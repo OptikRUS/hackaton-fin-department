@@ -27,10 +27,13 @@
 | src/infra/api/common/\_\_init\_\_.py                |        0 |        0 |    100% |           |
 | src/infra/api/common/endpoints.py                   |        5 |        0 |    100% |           |
 | src/infra/api/exceptions.py                         |        9 |        1 |     89% |        12 |
+| src/infra/api/parents/\_\_init\_\_.py               |        0 |        0 |    100% |           |
+| src/infra/api/parents/endpoints.py                  |        8 |        0 |    100% |           |
+| src/infra/api/parents/schemas.py                    |       12 |        0 |    100% |           |
 | src/infra/api/pets/\_\_init\_\_.py                  |        0 |        0 |    100% |           |
 | src/infra/api/pets/endpoints.py                     |       10 |        0 |    100% |           |
 | src/infra/api/pets/schemas.py                       |       11 |        0 |    100% |           |
-| src/infra/api/routers.py                            |        6 |        0 |    100% |           |
+| src/infra/api/routers.py                            |        8 |        0 |    100% |           |
 | src/infra/migrations/\_\_init\_\_.py                |        0 |        0 |    100% |           |
 | src/infra/migrations/commands.py                    |       12 |        0 |    100% |           |
 | src/infra/migrations/env.py                         |       40 |        9 |     78% |25-29, 36-43, 74 |
@@ -44,7 +47,7 @@
 | src/infra/storages/postgres/config.py               |        4 |        0 |    100% |           |
 | src/infra/storages/postgres/models.py               |       19 |        0 |    100% |           |
 | src/infra/storages/postgres/pet\_storage.py         |       12 |        0 |    100% |           |
-| **TOTAL**                                           |  **325** |   **24** | **93%** |           |
+| **TOTAL**                                           |  **347** |   **24** | **93%** |           |
 
 
 ## Setup coverage badge
