@@ -83,11 +83,17 @@ curl -X POST http://127.0.0.1:8080/api/pets \
   },
   "skills": [
     {"id": "FIN-01", "title": "Сравнивает денежные суммы", "status": "MASTERED", "isMastered": true},
+    {"id": "FIN-02", "title": "Планирует бюджет на период", "status": "NO_DATA", "isMastered": null},
     {"id": "FIN-03", "title": "Учитывает обязательные нужды перед желаниями", "status": "PRACTICING", "isMastered": false},
     {"id": "FIN-04", "title": "Следит, чтобы денег хватало до следующего дохода", "status": "NO_DATA", "isMastered": null},
     {"id": "FIN-05", "title": "Последовательно собирает на выбранную цель", "status": "MASTERED", "isMastered": true},
+    {"id": "FIN-06", "title": "Откладывает желанную покупку ради приоритета", "status": "NO_DATA", "isMastered": null},
+    {"id": "FIN-07", "title": "Создаёт запас на непредвиденные расходы", "status": "NO_DATA", "isMastered": null},
     {"id": "FIN-08", "title": "Перестраивает действия после неожиданной траты", "status": "PRACTICING", "isMastered": false},
-    {"id": "FIN-10", "title": "Планирует дополнительный заработок", "status": "NO_DATA", "isMastered": null}
+    {"id": "FIN-09", "title": "Сопоставляет денежные и другие затраты", "status": "NO_DATA", "isMastered": null},
+    {"id": "FIN-10", "title": "Планирует дополнительный заработок", "status": "NO_DATA", "isMastered": null},
+    {"id": "FIN-11", "title": "Разбирает финансовые последствия и меняет решение", "status": "NO_DATA", "isMastered": null},
+    {"id": "FIN-12", "title": "Понимает свои доходы и расходы", "status": "NO_DATA", "isMastered": null}
   ],
   "isDemo": true
 }

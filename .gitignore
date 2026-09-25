@@ -20,3 +20,6 @@ dist/
 *.egg-info/
 /.agents/skills/
 /.ralphex/task.md
+
+output
+assets
