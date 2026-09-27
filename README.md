@@ -104,8 +104,9 @@ curl -X POST http://127.0.0.1:8080/api/pets \
 
 ## Снапшоты мира
 
-`PUT /v1/profiles/{profileId}/snapshot` сохраняет полный архив в PostgreSQL, а
-`GET` по тому же пути возвращает последнюю подтверждённую версию. Первый PUT
+`PUT /v1/profiles/snapshot` сохраняет полный архив в PostgreSQL, а
+`POST /v1/profiles/snapshot/download` возвращает последнюю подтверждённую версию.
+Оба запроса передают `deviceId` в JSON-теле. Первый PUT
 создаёт сохранение (`201`), обновление возвращает `200`; оба ответа содержат
 `uploadId`, `gameRunId`, `serverRevision` и `checksum`. Точный формат тела
 запроса и ответа доступен в `/docs`.
@@ -115,7 +116,7 @@ curl -X POST http://127.0.0.1:8080/api/pets \
 запрос с тем же ID получает `409 IDEMPOTENCY_CONFLICT`. Клиент передаёт
 `expectedServerRevision=null` для первой записи, затем последнюю полученную
 ревизию. Устаревшая ревизия даёт `409 SNAPSHOT_REVISION_CONFLICT`, другой
-`gameRunId` — `409 GAME_RUN_CONFLICT`. Если архива нет, GET возвращает
+`gameRunId` — `409 GAME_RUN_CONFLICT`. Если архива нет, скачивание возвращает
 `404 SNAPSHOT_NOT_FOUND`.
 
 Некорректная форма PUT-запроса и значения, которые PostgreSQL не может сохранить,
@@ -126,8 +127,24 @@ curl -X POST http://127.0.0.1:8080/api/pets \
 Сервер разбирает `snapshotJson` как JSON и сверяет его `formatVersion`, `runId`,
 `historySequence` и `checksum` с оболочкой. Строка архива хранится и выдаётся
 без изменений. Полный алгоритм HistoryCodec, включая пересчёт checksum и проверку
-истории, пока не перенесён. В этом этапе доступ определяется только публичным
-`profileId`; авторизация устройства ещё не реализована.
+истории, пока не перенесён. В этом этапе доступ определяется строковым `deviceId`;
+авторизации и Bearer-токенов контракт не предусматривает.
+
+## Мобильные методы
+
+| Метод | Путь | Назначение |
+| --- | --- | --- |
+| `POST` | `/api/pets` | Регистрация питомца и `deviceId` |
+| `PUT` | `/v1/profiles/snapshot` | Отправка архива |
+| `POST` | `/v1/profiles/snapshot/download` | Получение архива |
+| `POST` | `/v1/profiles/analytics` | Передача фактов и навыков |
+| `POST` | `/v1/profiles/skills/query` | Получение оценок навыков |
+| `POST` | `/v1/profiles/rewards/pull` | Получение подарков |
+| `POST` | `/v1/profiles/rewards/ack` | Подтверждение применения подарков |
+| `POST` | `/v1/parent-profiles/rewards` | Выдача подарка |
+
+`deviceId` передаётся в JSON-теле каждого метода. Регистрация, отправка архива
+и аналитики, подтверждение и выдача подарка требуют `Idempotency-Key`.
 
 ## Docker (только локальная разработка)
 

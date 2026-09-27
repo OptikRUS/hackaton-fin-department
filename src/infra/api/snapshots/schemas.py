@@ -1,8 +1,8 @@
 from typing import Annotated, Literal, Self
-from uuid import UUID
 
 from pydantic import Field
 
+from src.core.profiles.schemas import DeviceId
 from src.core.snapshots.schemas import (
     Snapshot,
     UploadSnapshotParams,
@@ -12,6 +12,7 @@ from src.infra.api.boundary import BoundaryModel
 
 
 class SnapshotUploadRequest(BoundaryModel):
+    device_id: Annotated[str, Field(min_length=1)]
     upload_id: Annotated[str, Field(min_length=1, max_length=255)]
     expected_server_revision: (
         Annotated[int, Field(ge=1, json_schema_extra={"format": "int64"})] | None
@@ -24,9 +25,9 @@ class SnapshotUploadRequest(BoundaryModel):
     snapshot_json: Annotated[str, Field(min_length=1)]
     schema_version: Literal[1] = 1
 
-    def to_domain(self, *, profile_id: UUID) -> UploadSnapshotParams:
+    def to_domain(self) -> UploadSnapshotParams:
         return UploadSnapshotParams(
-            profile_id=profile_id,
+            profile_id=DeviceId(value=self.device_id).profile_id,
             upload_id=self.upload_id,
             expected_server_revision=self.expected_server_revision,
             game_run_id=self.game_run_id,
@@ -71,6 +72,11 @@ class SnapshotDownloadResponse(BoundaryModel):
             snapshot_json=snapshot.snapshot_json,
             schema_version=1,
         )
+
+
+class SnapshotDownloadRequest(BoundaryModel):
+    device_id: Annotated[str, Field(min_length=1)]
+    schema_version: Literal[1] = 1
 
 
 class SnapshotError(BoundaryModel):

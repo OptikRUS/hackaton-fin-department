@@ -1,8 +1,7 @@
-from uuid import UUID
-
 import pytest
 from httpx2 import codes
 
+from src.core.profiles.schemas import DeviceId
 from src.core.snapshots.exceptions import (
     InvalidSnapshotError,
     InvalidSnapshotRequestError,
@@ -22,11 +21,11 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
             use_case_type=UploadSnapshotUseCase,
         )
 
-    async def test_first_upload_returns_created_response(self) -> None:
+    async def test_first_upload_returns_ok_response(self) -> None:
         self.use_case.execute.return_value = self.factory.snapshots.upload_result()
 
         response = await self.api.upload_snapshot(
-            profile_id="12345678-1234-5678-1234-567812345678",
+            device_id="9f1c2d3e4a5b6078",
             upload_id="upload-1",
             expected_server_revision=None,
             game_run_id="run-1",
@@ -37,7 +36,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
             snapshot_json=self.factory.snapshots.archive_json(),
         )
 
-        assert response.status_code == codes.CREATED
+        assert response.status_code == codes.OK
         assert response.json() == {
             "uploadId": "upload-1",
             "gameRunId": "run-1",
@@ -46,7 +45,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         }
         self.use_case.execute.assert_awaited_once_with(
             params=self.factory.snapshots.upload_params(
-                profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
             ),
             idempotency_key="upload-1",
         )
@@ -59,7 +58,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         )
 
         response = await self.api.upload_snapshot(
-            profile_id="12345678-1234-5678-1234-567812345678",
+            device_id="9f1c2d3e4a5b6078",
             upload_id="upload-2",
             expected_server_revision=1,
             game_run_id="run-1",
@@ -79,7 +78,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         }
         self.use_case.execute.assert_awaited_once_with(
             params=self.factory.snapshots.upload_params(
-                profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
                 upload_id="upload-2",
                 expected_server_revision=1,
             ),
@@ -90,7 +89,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         self.use_case.execute.side_effect = InvalidSnapshotRequestError
 
         response = await self.api.upload_snapshot(
-            profile_id="12345678-1234-5678-1234-567812345678",
+            device_id="9f1c2d3e4a5b6078",
             upload_id="upload-1",
             expected_server_revision=None,
             game_run_id="run-1",
@@ -105,7 +104,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         assert response.json() == {"code": "INVALID_REQUEST"}
         self.use_case.execute.assert_awaited_once_with(
             params=self.factory.snapshots.upload_params(
-                profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
             ),
             idempotency_key="upload-1",
         )
@@ -114,7 +113,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         self.use_case.execute.side_effect = InvalidSnapshotError
 
         response = await self.api.upload_snapshot(
-            profile_id="12345678-1234-5678-1234-567812345678",
+            device_id="9f1c2d3e4a5b6078",
             upload_id="upload-1",
             expected_server_revision=None,
             game_run_id="run-1",
@@ -129,7 +128,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         assert response.json() == {"code": "SNAPSHOT_INVALID"}
         self.use_case.execute.assert_awaited_once_with(
             params=self.factory.snapshots.upload_params(
-                profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
             ),
             idempotency_key="upload-1",
         )
@@ -138,7 +137,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         self.use_case.execute.side_effect = SnapshotRevisionConflictError
 
         response = await self.api.upload_snapshot(
-            profile_id="12345678-1234-5678-1234-567812345678",
+            device_id="9f1c2d3e4a5b6078",
             upload_id="upload-1",
             expected_server_revision=None,
             game_run_id="run-1",
@@ -153,7 +152,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         assert response.json() == {"code": "SNAPSHOT_REVISION_CONFLICT"}
         self.use_case.execute.assert_awaited_once_with(
             params=self.factory.snapshots.upload_params(
-                profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
             ),
             idempotency_key="upload-1",
         )
@@ -162,7 +161,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         self.use_case.execute.side_effect = SnapshotGameRunConflictError
 
         response = await self.api.upload_snapshot(
-            profile_id="12345678-1234-5678-1234-567812345678",
+            device_id="9f1c2d3e4a5b6078",
             upload_id="upload-1",
             expected_server_revision=None,
             game_run_id="run-1",
@@ -177,7 +176,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         assert response.json() == {"code": "GAME_RUN_CONFLICT"}
         self.use_case.execute.assert_awaited_once_with(
             params=self.factory.snapshots.upload_params(
-                profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
             ),
             idempotency_key="upload-1",
         )
@@ -186,7 +185,7 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         self.use_case.execute.side_effect = SnapshotIdempotencyConflictError
 
         response = await self.api.upload_snapshot(
-            profile_id="12345678-1234-5678-1234-567812345678",
+            device_id="9f1c2d3e4a5b6078",
             upload_id="upload-1",
             expected_server_revision=None,
             game_run_id="run-1",
@@ -201,14 +200,14 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
         assert response.json() == {"code": "IDEMPOTENCY_CONFLICT"}
         self.use_case.execute.assert_awaited_once_with(
             params=self.factory.snapshots.upload_params(
-                profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
             ),
             idempotency_key="upload-1",
         )
 
     async def test_rejects_incomplete_envelope_before_use_case(self) -> None:
         response = await self.api.upload_snapshot(
-            profile_id="12345678-1234-5678-1234-567812345678",
+            device_id="9f1c2d3e4a5b6078",
             upload_id="upload-1",
         )
 
@@ -226,12 +225,10 @@ class TestDownloadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
 
     async def test_download_returns_exact_archive(self) -> None:
         self.use_case.execute.return_value = self.factory.snapshots.snapshot(
-            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+            profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
         )
 
-        response = await self.api.download_snapshot(
-            profile_id="12345678-1234-5678-1234-567812345678",
-        )
+        response = await self.api.download_snapshot(device_id="9f1c2d3e4a5b6078")
 
         assert response.status_code == codes.OK
         assert response.json() == {
@@ -242,18 +239,16 @@ class TestDownloadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
             "snapshotJson": self.factory.snapshots.archive_json(),
         }
         self.use_case.execute.assert_awaited_once_with(
-            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+            profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
         )
 
     async def test_missing_snapshot_maps_to_not_found(self) -> None:
         self.use_case.execute.side_effect = SnapshotNotFoundError
 
-        response = await self.api.download_snapshot(
-            profile_id="12345678-1234-5678-1234-567812345678",
-        )
+        response = await self.api.download_snapshot(device_id="9f1c2d3e4a5b6078")
 
         assert response.status_code == codes.NOT_FOUND
         assert response.json() == {"code": "SNAPSHOT_NOT_FOUND"}
         self.use_case.execute.assert_awaited_once_with(
-            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+            profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
         )

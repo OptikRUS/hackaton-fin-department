@@ -1,5 +1,4 @@
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Path
 
@@ -10,11 +9,11 @@ router = APIRouter(prefix="/api/parents", tags=["parents"])
 
 @router.get(path="/{petId}")
 async def get_parent_report(
-    pet_id: Annotated[UUID, Path(alias="petId")],
+    pet_id: Annotated[str, Path(alias="petId", min_length=1)],
 ) -> ParentResponse:
     return ParentResponse(
         pet=ParentPetResponse(
-            id=pet_id.hex,
+            id=pet_id,
             name="Рыжик",
             temper="playful",
             balance=100,
