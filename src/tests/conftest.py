@@ -1,4 +1,4 @@
-from collections.abc import AsyncGenerator, Callable, Generator
+from collections.abc import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
@@ -13,10 +13,12 @@ from src.config.settings import settings
 from src.infra.api.app import create_app
 from src.infra.migrations.commands import downgrade, migrate
 from src.infra.storages.postgres.config import async_session
-from src.infra.storages.postgres.models import PetModel
+from src.infra.storages.postgres.models import PetModel, SnapshotHeadModel, SnapshotUploadModel
 from src.infra.storages.postgres.pet_storage import PostgresPetStorage
+from src.infra.storages.postgres.snapshot_storage import PostgresSnapshotStorage
 from src.tests.di.providers.general import MockGeneralProvider
 from src.tests.di.providers.pets import MockPetsUseCaseProvider
+from src.tests.di.providers.snapshots import MockSnapshotsUseCaseProvider
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -36,6 +38,8 @@ async def engine() -> AsyncGenerator[AsyncEngine]:
 @pytest.fixture
 async def clear_tables(engine: AsyncEngine) -> None:
     async with engine.begin() as connection:
+        await connection.execute(delete(SnapshotUploadModel))
+        await connection.execute(delete(SnapshotHeadModel))
         await connection.execute(delete(PetModel))
 
 
@@ -53,10 +57,16 @@ def pet_storage(session: AsyncSession) -> PostgresPetStorage:
 
 
 @pytest.fixture
+def snapshot_storage(session: AsyncSession) -> PostgresSnapshotStorage:
+    return PostgresSnapshotStorage(session=session)
+
+
+@pytest.fixture
 async def container() -> AsyncGenerator[AsyncContainer]:
     container = make_async_container(
         FastapiProvider(),
         MockPetsUseCaseProvider(),
+        MockSnapshotsUseCaseProvider(),
         MockGeneralProvider(),
     )
     yield container
@@ -68,21 +78,12 @@ def app() -> FastAPI:
     return create_app()
 
 
-@pytest.fixture
-def api_client_factory(app: FastAPI, container: AsyncContainer) -> Callable[..., AsyncClient]:
-    setup_dishka(container=container, app=app)
-
-    def create_client(*, headers: dict[str, str] | None = None) -> AsyncClient:
-        return AsyncClient(
-            transport=ASGITransport(app=app, client=("testclient", 50000)),
-            base_url="http://testserver",
-            headers={"accept-encoding": "gzip, deflate", **(headers or {})},
-        )
-
-    return create_client
-
-
 @pytest_asyncio.fixture
-async def client(api_client_factory: Callable[..., AsyncClient]) -> AsyncGenerator[AsyncClient]:
-    async with api_client_factory() as client:
+async def client(app: FastAPI, container: AsyncContainer) -> AsyncGenerator[AsyncClient]:
+    setup_dishka(container=container, app=app)
+    async with AsyncClient(
+        transport=ASGITransport(app=app, client=("testclient", 50000)),
+        base_url="http://testserver",
+        headers={"accept-encoding": "gzip, deflate"},
+    ) as client:
         yield client

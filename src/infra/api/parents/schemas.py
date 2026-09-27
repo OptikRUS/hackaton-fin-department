@@ -33,11 +33,17 @@ class ParentResponse(BoundaryModel):
 
 DEMO_SKILLS: tuple[tuple[str, str, SkillStatus], ...] = (
     ("FIN-01", "Сравнивает денежные суммы", SkillStatus.MASTERED),
+    ("FIN-02", "Планирует бюджет на период", SkillStatus.NO_DATA),
     ("FIN-03", "Учитывает обязательные нужды перед желаниями", SkillStatus.PRACTICING),
     ("FIN-04", "Следит, чтобы денег хватало до следующего дохода", SkillStatus.NO_DATA),
     ("FIN-05", "Последовательно собирает на выбранную цель", SkillStatus.MASTERED),
+    ("FIN-06", "Откладывает желанную покупку ради приоритета", SkillStatus.NO_DATA),
+    ("FIN-07", "Создаёт запас на непредвиденные расходы", SkillStatus.NO_DATA),
     ("FIN-08", "Перестраивает действия после неожиданной траты", SkillStatus.PRACTICING),
+    ("FIN-09", "Сопоставляет денежные и другие затраты", SkillStatus.NO_DATA),
     ("FIN-10", "Планирует дополнительный заработок", SkillStatus.NO_DATA),
+    ("FIN-11", "Разбирает финансовые последствия и меняет решение", SkillStatus.NO_DATA),
+    ("FIN-12", "Понимает свои доходы и расходы", SkillStatus.NO_DATA),
 )
 
 

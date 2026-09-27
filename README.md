@@ -83,11 +83,17 @@ curl -X POST http://127.0.0.1:8080/api/pets \
   },
   "skills": [
     {"id": "FIN-01", "title": "Сравнивает денежные суммы", "status": "MASTERED", "isMastered": true},
+    {"id": "FIN-02", "title": "Планирует бюджет на период", "status": "NO_DATA", "isMastered": null},
     {"id": "FIN-03", "title": "Учитывает обязательные нужды перед желаниями", "status": "PRACTICING", "isMastered": false},
     {"id": "FIN-04", "title": "Следит, чтобы денег хватало до следующего дохода", "status": "NO_DATA", "isMastered": null},
     {"id": "FIN-05", "title": "Последовательно собирает на выбранную цель", "status": "MASTERED", "isMastered": true},
+    {"id": "FIN-06", "title": "Откладывает желанную покупку ради приоритета", "status": "NO_DATA", "isMastered": null},
+    {"id": "FIN-07", "title": "Создаёт запас на непредвиденные расходы", "status": "NO_DATA", "isMastered": null},
     {"id": "FIN-08", "title": "Перестраивает действия после неожиданной траты", "status": "PRACTICING", "isMastered": false},
-    {"id": "FIN-10", "title": "Планирует дополнительный заработок", "status": "NO_DATA", "isMastered": null}
+    {"id": "FIN-09", "title": "Сопоставляет денежные и другие затраты", "status": "NO_DATA", "isMastered": null},
+    {"id": "FIN-10", "title": "Планирует дополнительный заработок", "status": "NO_DATA", "isMastered": null},
+    {"id": "FIN-11", "title": "Разбирает финансовые последствия и меняет решение", "status": "NO_DATA", "isMastered": null},
+    {"id": "FIN-12", "title": "Понимает свои доходы и расходы", "status": "NO_DATA", "isMastered": null}
   ],
   "isDemo": true
 }
@@ -95,6 +101,33 @@ curl -X POST http://127.0.0.1:8080/api/pets \
 
 `NO_DATA` отличается от `PRACTICING`: отсутствие наблюдений не означает, что
 ребёнок не усвоил навык. Поэтому `isMastered` в этом случае равен `null`.
+
+## Снапшоты мира
+
+`PUT /v1/profiles/{profileId}/snapshot` сохраняет полный архив в PostgreSQL, а
+`GET` по тому же пути возвращает последнюю подтверждённую версию. Первый PUT
+создаёт сохранение (`201`), обновление возвращает `200`; оба ответа содержат
+`uploadId`, `gameRunId`, `serverRevision` и `checksum`. Точный формат тела
+запроса и ответа доступен в `/docs`.
+
+При загрузке обязательный заголовок `Idempotency-Key` равен `uploadId`.
+Идентичный повтор возвращает прежний результат без изменения ревизии, другой
+запрос с тем же ID получает `409 IDEMPOTENCY_CONFLICT`. Клиент передаёт
+`expectedServerRevision=null` для первой записи, затем последнюю полученную
+ревизию. Устаревшая ревизия даёт `409 SNAPSHOT_REVISION_CONFLICT`, другой
+`gameRunId` — `409 GAME_RUN_CONFLICT`. Если архива нет, GET возвращает
+`404 SNAPSHOT_NOT_FOUND`.
+
+Некорректная форма PUT-запроса и значения, которые PostgreSQL не может сохранить,
+дают `400 INVALID_REQUEST`. `uploadId` ограничен 255 байтами UTF-8; в строковых
+полях не допускается NUL. Повреждённый JSON архива или несовпадение его
+верхних метаданных с оболочкой даёт `422 SNAPSHOT_INVALID`.
+
+Сервер разбирает `snapshotJson` как JSON и сверяет его `formatVersion`, `runId`,
+`historySequence` и `checksum` с оболочкой. Строка архива хранится и выдаётся
+без изменений. Полный алгоритм HistoryCodec, включая пересчёт checksum и проверку
+истории, пока не перенесён. В этом этапе доступ определяется только публичным
+`profileId`; авторизация устройства ещё не реализована.
 
 ## Docker (только локальная разработка)
 
