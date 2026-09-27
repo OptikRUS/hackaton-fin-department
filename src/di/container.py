@@ -4,6 +4,7 @@ from dishka.integrations.fastapi import FastapiProvider
 from src.di.providers.general import GeneralProvider
 from src.di.providers.pets import PetsProvider
 from src.di.providers.postgres import PostgresProvider
+from src.di.providers.snapshots import SnapshotsProvider
 
 
 def create_container() -> AsyncContainer:
@@ -12,4 +13,5 @@ def create_container() -> AsyncContainer:
         GeneralProvider(),
         PostgresProvider(),
         PetsProvider(),
+        SnapshotsProvider(),
     )
