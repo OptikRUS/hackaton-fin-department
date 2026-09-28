@@ -39,6 +39,9 @@ class TestUploadSnapshotUseCase(FactoryFixture):
             profile_id=UUID("12345678-1234-5678-1234-567812345678"),
         )
         self.storage.get_upload.return_value = None
+        self.storage.get_latest.return_value = self.factory.snapshots.snapshot(
+            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+        )
         self.use_case = UploadSnapshotUseCase(snapshot_storage=self.storage)
 
     async def test_stores_first_snapshot_in_order(self) -> None:
@@ -185,6 +188,175 @@ class TestUploadSnapshotUseCase(FactoryFixture):
                     game_run_id="run-2",
                 ),
                 idempotency_key="upload-2",
+            )
+
+        self.storage.replace_head.assert_not_awaited()
+
+    async def test_accepts_offline_restarts_preserving_saved_history(self) -> None:
+        self.storage.get_head_for_update.return_value = self.factory.snapshots.head(
+            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+            server_revision=1,
+            game_run_id="run-1",
+        )
+        self.storage.get_latest.return_value = self.factory.snapshots.snapshot(
+            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+            snapshot_json=self.factory.snapshots.archive_json(
+                history_sequence=1,
+                history=[{"id": "entry-1", "sequence": 1}],
+            ),
+        )
+
+        result = await self.use_case.execute(
+            params=self.factory.snapshots.upload_params(
+                profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                expected_server_revision=1,
+                game_run_id="run-3",
+                snapshot_format_version=5,
+                snapshot_json=self.factory.snapshots.archive_json(
+                    format_version=5,
+                    run_id="run-3",
+                    history=[],
+                    archived_runs=[
+                        self.factory.snapshots.archived_run(
+                            history_sequence=2,
+                            history=[
+                                {"id": "entry-1", "sequence": 1},
+                                {"id": "entry-2", "sequence": 2},
+                            ],
+                        ),
+                        self.factory.snapshots.archived_run(
+                            run_id="run-2",
+                            next_run_id="run-3",
+                            restart_request_id="restart-2",
+                        ),
+                    ],
+                ),
+            ),
+            idempotency_key="upload-1",
+        )
+
+        assert result == self.factory.snapshots.upload_result(
+            game_run_id="run-3",
+            server_revision=2,
+            created=False,
+        )
+        self.storage.replace_head.assert_awaited_once_with(
+            snapshot=self.factory.snapshots.snapshot(
+                profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                game_run_id="run-3",
+                server_revision=2,
+                snapshot_json=self.factory.snapshots.archive_json(
+                    format_version=5,
+                    run_id="run-3",
+                    history=[],
+                    archived_runs=[
+                        self.factory.snapshots.archived_run(
+                            history_sequence=2,
+                            history=[
+                                {"id": "entry-1", "sequence": 1},
+                                {"id": "entry-2", "sequence": 2},
+                            ],
+                        ),
+                        self.factory.snapshots.archived_run(
+                            run_id="run-2",
+                            next_run_id="run-3",
+                            restart_request_id="restart-2",
+                        ),
+                    ],
+                ),
+            ),
+        )
+
+    async def test_rejects_restart_with_changed_saved_history(self) -> None:
+        self.storage.get_head_for_update.return_value = self.factory.snapshots.head(
+            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+            server_revision=1,
+            game_run_id="run-1",
+        )
+        self.storage.get_latest.return_value = self.factory.snapshots.snapshot(
+            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+            snapshot_json=self.factory.snapshots.archive_json(
+                history_sequence=1,
+                history=[{"id": "entry-1", "sequence": 1}],
+            ),
+        )
+
+        with pytest.raises(SnapshotGameRunConflictError):
+            await self.use_case.execute(
+                params=self.factory.snapshots.upload_params(
+                    profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                    expected_server_revision=1,
+                    game_run_id="run-2",
+                    snapshot_format_version=5,
+                    snapshot_json=self.factory.snapshots.archive_json(
+                        format_version=5,
+                        run_id="run-2",
+                        history=[],
+                        archived_runs=[
+                            self.factory.snapshots.archived_run(
+                                history_sequence=1,
+                                history=[{"id": "changed-entry", "sequence": 1}],
+                            )
+                        ],
+                    ),
+                ),
+                idempotency_key="upload-1",
+            )
+
+        self.storage.replace_head.assert_not_awaited()
+
+    async def test_rejects_unlinked_restart(self) -> None:
+        self.storage.get_head_for_update.return_value = self.factory.snapshots.head(
+            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+            server_revision=1,
+            game_run_id="run-1",
+        )
+
+        with pytest.raises(SnapshotGameRunConflictError):
+            await self.use_case.execute(
+                params=self.factory.snapshots.upload_params(
+                    profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                    expected_server_revision=1,
+                    game_run_id="run-3",
+                    snapshot_format_version=5,
+                    snapshot_json=self.factory.snapshots.archive_json(
+                        format_version=5,
+                        run_id="run-3",
+                        history=[],
+                        archived_runs=[self.factory.snapshots.archived_run()],
+                    ),
+                ),
+                idempotency_key="upload-1",
+            )
+
+        self.storage.replace_head.assert_not_awaited()
+
+    async def test_rejects_dropping_archive_on_same_run_update(self) -> None:
+        self.storage.get_head_for_update.return_value = self.factory.snapshots.head(
+            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+            server_revision=1,
+            game_run_id="run-2",
+        )
+        self.storage.get_latest.return_value = self.factory.snapshots.snapshot(
+            profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+            game_run_id="run-2",
+            snapshot_json=self.factory.snapshots.archive_json(
+                format_version=5,
+                run_id="run-2",
+                history=[],
+                archived_runs=[self.factory.snapshots.archived_run()],
+            ),
+        )
+
+        with pytest.raises(SnapshotGameRunConflictError):
+            await self.use_case.execute(
+                params=self.factory.snapshots.upload_params(
+                    profile_id=UUID("12345678-1234-5678-1234-567812345678"),
+                    expected_server_revision=1,
+                    game_run_id="run-2",
+                    snapshot_format_version=5,
+                ),
+                idempotency_key="upload-1",
             )
 
         self.storage.replace_head.assert_not_awaited()

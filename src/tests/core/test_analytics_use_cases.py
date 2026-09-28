@@ -228,6 +228,53 @@ class TestUploadAnalyticsUseCase(FactoryFixture):
             "event-1": AnalyticsUploadParams.digest_value(original),
         }
 
+    async def test_uploads_analytics_for_archived_mobile_run(self) -> None:
+        self.storage.archive = self.factory.snapshots.archive_json(
+            format_version=5,
+            run_id="run-2",
+            history=[],
+            archived_runs=[
+                self.factory.snapshots.archived_run(
+                    history_sequence=1,
+                    history=[
+                        {
+                            "sequence": 1,
+                            "facts": [
+                                {
+                                    "eventId": "event-1",
+                                    "gameRunId": "run-1",
+                                    "episodeId": "ep-1",
+                                    "actionId": "action-1",
+                                    "sequence": 1,
+                                    "detail": {"_type": "interaction", "name": "tap"},
+                                }
+                            ],
+                        }
+                    ],
+                )
+            ],
+        )
+
+        result = await self.use_case.execute(
+            params=self.factory.analytics.upload_params(
+                profile_id=UUID(int=1),
+                sequence=1,
+                facts=[
+                    {
+                        "eventId": "event-1",
+                        "gameRunId": "run-1",
+                        "episodeId": "ep-1",
+                        "actionId": "action-1",
+                        "sequence": 1,
+                        "detail": {"_type": "interaction", "name": "tap"},
+                    }
+                ],
+            ),
+            idempotency_key="batch-1",
+        )
+
+        assert result == self.factory.analytics.upload_result(sequence=1, event_ids=("event-1",))
+
     async def test_mobile_skill_counters_are_recomputed_from_observations(self) -> None:
         fact: dict[str, Any] = {
             "eventId": "event-1",

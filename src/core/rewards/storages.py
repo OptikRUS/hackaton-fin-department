@@ -48,8 +48,8 @@ class RewardStorage(metaclass=ABCMeta):
     async def get_receipts_by_application_ids(
         self,
         *,
-        application_ids: Sequence[UUID],
-    ) -> Mapping[UUID, tuple[RewardReceipt, UUID, str]]: ...
+        application_ids: Sequence[str],
+    ) -> Mapping[str, tuple[RewardReceipt, UUID, str]]: ...
 
     @abstractmethod
     async def get_rewards_by_ids(
@@ -67,7 +67,7 @@ class RewardStorage(metaclass=ABCMeta):
         profile_id: UUID,
         game_run_id: str,
         receipts: Sequence[RewardReceipt],
-    ) -> set[UUID]: ...
+    ) -> set[str]: ...
 
     @abstractmethod
     async def insert_ack(self, *, profile_id: UUID, idempotency_key: str, digest: str) -> None: ...

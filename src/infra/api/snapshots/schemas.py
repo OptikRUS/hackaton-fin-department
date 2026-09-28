@@ -20,7 +20,7 @@ class SnapshotUploadRequest(BoundaryModel):
     game_run_id: Annotated[str, Field(min_length=1)]
     through_history_sequence: Annotated[int, Field(ge=0, json_schema_extra={"format": "int64"})]
     current_content_fingerprint: Annotated[str, Field(min_length=1)]
-    snapshot_format_version: Annotated[int, Field(ge=1, le=4)]
+    snapshot_format_version: Annotated[int, Field(ge=1, le=5)]
     checksum: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
     snapshot_json: Annotated[str, Field(min_length=1)]
     schema_version: Literal[1] = 1

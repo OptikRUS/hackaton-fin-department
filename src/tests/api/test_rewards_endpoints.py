@@ -163,7 +163,7 @@ class TestAckRewardAPI(APIFixture, ContainerFixture, FactoryFixture):
     async def test_ack_returns_exact_accepted_application_ids(self) -> None:
         self.use_case.execute.return_value = AckRewardsResult(
             game_run_id="run-1",
-            accepted_application_ids=(UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571"),),
+            accepted_application_ids=("parent-application:7e0f74aa-9354-47f4-a2a6-3857bf3b7571",),
         )
 
         response = await self.api.ack_rewards(
@@ -173,7 +173,7 @@ class TestAckRewardAPI(APIFixture, ContainerFixture, FactoryFixture):
             receipts=[
                 {
                     "rewardId": "5488c280-7f73-44e4-93a2-74d46e21a2e3",
-                    "applicationId": "7e0f74aa-9354-47f4-a2a6-3857bf3b7571",
+                    "applicationId": "parent-application:7e0f74aa-9354-47f4-a2a6-3857bf3b7571",
                     "historyEntryId": "reward-application:7e0f74aa-9354-47f4-a2a6-3857bf3b7571",
                     "historySequence": 18,
                     "outcome": "APPLIED",
@@ -185,7 +185,7 @@ class TestAckRewardAPI(APIFixture, ContainerFixture, FactoryFixture):
         assert response.json() == {
             "schemaVersion": 1,
             "gameRunId": "run-1",
-            "acceptedApplicationIds": ["7e0f74aa-9354-47f4-a2a6-3857bf3b7571"],
+            "acceptedApplicationIds": ["parent-application:7e0f74aa-9354-47f4-a2a6-3857bf3b7571"],
         }
         self.use_case.execute.assert_awaited_once_with(
             profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
@@ -195,7 +195,7 @@ class TestAckRewardAPI(APIFixture, ContainerFixture, FactoryFixture):
                 receipts=(
                     RewardReceipt(
                         reward_id=UUID("5488c280-7f73-44e4-93a2-74d46e21a2e3"),
-                        application_id=UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571"),
+                        application_id="parent-application:7e0f74aa-9354-47f4-a2a6-3857bf3b7571",
                         history_entry_id="reward-application:7e0f74aa-9354-47f4-a2a6-3857bf3b7571",
                         history_sequence=18,
                         outcome="APPLIED",

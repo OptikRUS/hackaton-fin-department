@@ -1,4 +1,3 @@
-import json
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -17,6 +16,8 @@ from src.core.analytics.schemas import (
     StoredBatch,
 )
 from src.core.analytics.storages import AnalyticsStorage
+from src.core.snapshots.exceptions import InvalidSnapshotError
+from src.core.snapshots.schemas import SnapshotArchive
 from src.core.use_case import UseCase
 
 
@@ -109,11 +110,10 @@ class UploadAnalyticsUseCase(UseCase):
     @staticmethod
     def _verify_snapshot_source(*, params: AnalyticsUploadParams, archive_json: str) -> None:
         try:
-            archive = json.loads(archive_json)
-            if (
-                archive["runId"] != params.game_run_id
-                or archive["historySequence"] < params.through_history_sequence
-            ):
+            archive = SnapshotArchive.from_json(snapshot_json=archive_json).for_run(
+                game_run_id=params.game_run_id,
+            )
+            if archive is None or archive["historySequence"] < params.through_history_sequence:
                 raise AnalyticsGameRunNotRegisteredError
             source_facts = {
                 fact["eventId"]: AnalyticsUploadParams.digest_value(fact)
@@ -121,7 +121,7 @@ class UploadAnalyticsUseCase(UseCase):
                 if entry["sequence"] <= params.through_history_sequence
                 for fact in entry.get("facts", [])
             }
-        except (KeyError, TypeError, ValueError) as exc:
+        except (KeyError, TypeError, ValueError, InvalidSnapshotError) as exc:
             raise InvalidAnalyticsError from exc
         if source_facts != params.original_digests():
             raise AnalyticsFactConflictError

@@ -94,7 +94,7 @@ class RewardsPage:
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RewardReceipt:
     reward_id: UUID
-    application_id: UUID
+    application_id: str
     history_entry_id: str
     history_sequence: int
     outcome: Literal["APPLIED", "ALREADY_OWNED"]
@@ -133,13 +133,21 @@ class AckRewardsParams:
         if any(
             not item.history_entry_id
             or "\x00" in item.history_entry_id
+            or not item.application_id.strip()
+            or "\x00" in item.application_id
             or item.history_sequence < 1
             for item in self.receipts
         ):
             raise InvalidRewardReceiptError
+        try:
+            for item in self.receipts:
+                item.application_id.encode("utf-8")
+                item.history_entry_id.encode("utf-8")
+        except UnicodeEncodeError as exc:
+            raise InvalidRewardReceiptError from exc
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AckRewardsResult:
     game_run_id: str
-    accepted_application_ids: tuple[UUID, ...]
+    accepted_application_ids: tuple[str, ...]

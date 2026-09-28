@@ -115,8 +115,8 @@ class PostgresRewardStorage(RewardStorage):
     async def get_receipts_by_application_ids(
         self,
         *,
-        application_ids: Sequence[UUID],
-    ) -> dict[UUID, tuple[RewardReceipt, UUID, str]]:
+        application_ids: Sequence[str],
+    ) -> dict[str, tuple[RewardReceipt, UUID, str]]:
         rows = await self.session.scalars(
             select(RewardReceiptModel).where(
                 RewardReceiptModel.application_id.in_(application_ids),
@@ -149,7 +149,7 @@ class PostgresRewardStorage(RewardStorage):
         profile_id: UUID,
         game_run_id: str,
         receipts: Sequence[RewardReceipt],
-    ) -> set[UUID]:
+    ) -> set[str]:
         rows = await self.session.scalars(
             insert(RewardReceiptModel)
             .values([

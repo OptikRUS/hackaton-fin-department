@@ -50,6 +50,36 @@ class TestUploadSnapshotAPI(APIFixture, ContainerFixture, FactoryFixture):
             idempotency_key="upload-1",
         )
 
+    async def test_accepts_current_mobile_snapshot_format(self) -> None:
+        self.use_case.execute.return_value = self.factory.snapshots.upload_result()
+
+        response = await self.api.upload_snapshot(
+            device_id="9f1c2d3e4a5b6078",
+            upload_id="upload-1",
+            expected_server_revision=None,
+            game_run_id="run-1",
+            through_history_sequence=0,
+            current_content_fingerprint="catalog-v1",
+            snapshot_format_version=5,
+            checksum="a" * 64,
+            snapshot_json=self.factory.snapshots.archive_json(format_version=5),
+        )
+
+        assert response.status_code == codes.OK
+        assert response.json() == {
+            "uploadId": "upload-1",
+            "gameRunId": "run-1",
+            "serverRevision": 1,
+            "checksum": "a" * 64,
+        }
+        self.use_case.execute.assert_awaited_once_with(
+            params=self.factory.snapshots.upload_params(
+                profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
+                snapshot_format_version=5,
+            ),
+            idempotency_key="upload-1",
+        )
+
     async def test_update_returns_ok_response(self) -> None:
         self.use_case.execute.return_value = self.factory.snapshots.upload_result(
             upload_id="upload-2",

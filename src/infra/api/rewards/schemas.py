@@ -94,7 +94,7 @@ class ParentRewardsResponse(BoundaryModel):
 class ParentRewardReceiptDto(BoundaryModel):
     model_config = ConfigDict(extra="forbid")
     reward_id: UUID
-    application_id: UUID
+    application_id: Annotated[str, Field(min_length=1)]
     history_entry_id: Annotated[str, Field(min_length=1)]
     history_sequence: Annotated[int, Field(strict=True, ge=1, le=2**63 - 1)]
     outcome: Literal["APPLIED", "ALREADY_OWNED"]
@@ -126,7 +126,7 @@ class AckParentRewardsRequest(BoundaryModel):
 class AckParentRewardsResponse(BoundaryModel):
     schema_version: Literal[1] = 1
     game_run_id: str
-    accepted_application_ids: list[UUID]
+    accepted_application_ids: list[str]
 
     @classmethod
     def from_domain(cls, result: AckRewardsResult) -> Self:
