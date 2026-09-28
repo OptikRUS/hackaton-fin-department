@@ -6,7 +6,7 @@ from fastapi import APIRouter, status
 from src.core.pets.use_cases import CreatePetUseCase
 from src.infra.api.pets.schemas import CreatePetRequest, CreatePetResponse
 
-router = APIRouter(prefix="/api/pets", tags=["pets"], route_class=DishkaRoute)
+router = APIRouter(prefix="/api/legacy/pets", tags=["pets"], route_class=DishkaRoute)
 
 
 @router.post(path="", status_code=status.HTTP_201_CREATED)

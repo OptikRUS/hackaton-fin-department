@@ -108,7 +108,8 @@ class TestGetParentReportAPI(APIFixture):
         assert response.json()["pet"]["id"] == "87654321876543218765432187654321"
         assert response.json()["isDemo"] is True
 
-    async def test_rejects_invalid_pet_id(self) -> None:
-        response = await self.api.get_parent_report(pet_id="not-a-uuid")
+    async def test_accepts_saved_device_id(self) -> None:
+        response = await self.api.get_parent_report(pet_id="9f1c2d3e4a5b6078")
 
-        assert response.status_code == codes.UNPROCESSABLE_CONTENT
+        assert response.status_code == codes.OK
+        assert response.json()["pet"]["id"] == "9f1c2d3e4a5b6078"
