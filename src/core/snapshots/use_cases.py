@@ -46,8 +46,12 @@ class UploadSnapshotUseCase(UseCase):
                 raise SnapshotRevisionConflictError
         elif params.expected_server_revision != head.server_revision:
             raise SnapshotRevisionConflictError
-        elif params.game_run_id != head.game_run_id:
-            raise SnapshotGameRunConflictError
+
+        if head.server_revision > 0:
+            previous_snapshot = await self.snapshot_storage.get_latest(profile_id=params.profile_id)
+            if previous_snapshot is None:
+                raise SnapshotGameRunConflictError
+            params.validate_continuation(previous=previous_snapshot)
 
         result = UploadSnapshotResult(
             upload_id=params.upload_id,

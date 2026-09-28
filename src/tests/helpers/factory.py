@@ -217,7 +217,7 @@ class RewardsFactory:
     @staticmethod
     def receipt(
         *,
-        application_id: UUID | None = None,
+        application_id: str | None = None,
         history_entry_id: str = "reward-application:7e0f74aa-9354-47f4-a2a6-3857bf3b7571",
         history_sequence: int = 18,
     ) -> RewardReceipt:
@@ -225,7 +225,7 @@ class RewardsFactory:
             reward_id=UUID("5488c280-7f73-44e4-93a2-74d46e21a2e3"),
             application_id=application_id
             if application_id is not None
-            else UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571"),
+            else "7e0f74aa-9354-47f4-a2a6-3857bf3b7571",
             history_entry_id=history_entry_id,
             history_sequence=history_sequence,
             outcome="APPLIED",
@@ -241,6 +241,8 @@ class SnapshotsFactory:
         run_id: str = "run-1",
         history_sequence: int = 0,
         checksum: str = "a" * 64,
+        history: list[dict[str, Any]] | None = None,
+        archived_runs: list[dict[str, Any]] | None = None,
     ) -> str:
         return json.dumps(
             {
@@ -248,9 +250,33 @@ class SnapshotsFactory:
                 "runId": run_id,
                 "historySequence": history_sequence,
                 "checksum": checksum,
+                **({"history": history} if history is not None else {}),
+                **({"archivedRuns": archived_runs} if archived_runs is not None else {}),
             },
             separators=(",", ":"),
         )
+
+    @classmethod
+    def archived_run(
+        cls,
+        *,
+        run_id: str = "run-1",
+        next_run_id: str = "run-2",
+        restart_request_id: str = "restart-1",
+        history_sequence: int = 0,
+        history: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "restartRequestId": restart_request_id,
+            "nextRunId": next_run_id,
+            "snapshot": json.loads(
+                cls.archive_json(
+                    run_id=run_id,
+                    history_sequence=history_sequence,
+                    history=history if history is not None else [],
+                )
+            ),
+        }
 
     @classmethod
     def upload_params(
@@ -261,6 +287,7 @@ class SnapshotsFactory:
         expected_server_revision: int | None = None,
         game_run_id: str = "run-1",
         snapshot_json: str | None = None,
+        snapshot_format_version: int = 4,
     ) -> UploadSnapshotParams:
         return UploadSnapshotParams(
             profile_id=profile_id,
@@ -269,11 +296,12 @@ class SnapshotsFactory:
             game_run_id=game_run_id,
             through_history_sequence=0,
             current_content_fingerprint="catalog-v1",
-            snapshot_format_version=4,
+            snapshot_format_version=snapshot_format_version,
             checksum="a" * 64,
             snapshot_json=snapshot_json
             if snapshot_json is not None
             else cls.archive_json(
+                format_version=snapshot_format_version,
                 run_id=game_run_id,
             ),
         )

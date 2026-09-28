@@ -384,7 +384,7 @@ class RewardReceiptModel(Base):
         CheckConstraint("outcome IN ('APPLIED', 'ALREADY_OWNED')", name="valid_outcome"),
     )
 
-    application_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    application_id: Mapped[str] = mapped_column(String(), primary_key=True)
     profile_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
     game_run_id: Mapped[str] = mapped_column(String, nullable=False)
     reward_id: Mapped[UUID] = mapped_column(

@@ -85,7 +85,7 @@ class TestPostgresRewardStorage(FactoryFixture, PostgresFixture):
             history_entry_id="reward-application:first",
         )
         restored = self.factory.rewards.receipt(
-            application_id=UUID("6a386b6f-a67a-4c31-9a12-3c660271dd32"),
+            application_id="parent-application:6a386b6f-a67a-4c31-9a12-3c660271dd32",
             history_entry_id="reward-application:restored",
             history_sequence=4,
         )

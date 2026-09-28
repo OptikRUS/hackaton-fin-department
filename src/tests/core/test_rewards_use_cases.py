@@ -175,7 +175,7 @@ class TestAckRewardsUseCase(FactoryFixture):
                 profile_id=UUID(int=1)
             ).reward_id: self.factory.rewards.grant(profile_id=UUID(int=1))
         }
-        self.storage.insert_receipts.return_value = {UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571")}
+        self.storage.insert_receipts.return_value = {"7e0f74aa-9354-47f4-a2a6-3857bf3b7571"}
         self.use_case = AckRewardsUseCase(storage=self.storage)
 
     async def test_ack_accepts_committed_receipt(self) -> None:
@@ -186,14 +186,14 @@ class TestAckRewardsUseCase(FactoryFixture):
                 game_run_id="run-1", receipts=(self.factory.rewards.receipt(),)
             ),
         )
-        assert result.accepted_application_ids == (UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571"),)
+        assert result.accepted_application_ids == ("7e0f74aa-9354-47f4-a2a6-3857bf3b7571",)
         self.storage.insert_receipts.assert_awaited_once()
         self.storage.insert_ack.assert_awaited_once()
 
     async def test_ack_allows_second_application_for_same_grant(self) -> None:
         second = RewardReceipt(
             reward_id=self.factory.rewards.grant(profile_id=UUID(int=1)).reward_id,
-            application_id=UUID("6a386b6f-a67a-4c31-9a12-3c660271dd32"),
+            application_id="6a386b6f-a67a-4c31-9a12-3c660271dd32",
             history_entry_id="another",
             history_sequence=4,
             outcome="APPLIED",
@@ -207,10 +207,10 @@ class TestAckRewardsUseCase(FactoryFixture):
 
     async def test_ack_rejects_changed_application_payload(self) -> None:
         self.storage.get_receipts_by_application_ids.return_value = {
-            UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571"): (
+            "7e0f74aa-9354-47f4-a2a6-3857bf3b7571": (
                 RewardReceipt(
                     reward_id=self.factory.rewards.grant(profile_id=UUID(int=1)).reward_id,
-                    application_id=UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571"),
+                    application_id="7e0f74aa-9354-47f4-a2a6-3857bf3b7571",
                     history_entry_id="different",
                     history_sequence=18,
                     outcome="APPLIED",
@@ -230,7 +230,7 @@ class TestAckRewardsUseCase(FactoryFixture):
 
     async def test_ack_rejects_application_id_reused_across_profiles(self) -> None:
         self.storage.get_receipts_by_application_ids.return_value = {
-            UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571"): (
+            "7e0f74aa-9354-47f4-a2a6-3857bf3b7571": (
                 self.factory.rewards.receipt(),
                 UUID(int=2),
                 "run-1",
@@ -247,7 +247,7 @@ class TestAckRewardsUseCase(FactoryFixture):
 
     async def test_ack_reuses_identical_application_in_new_batch(self) -> None:
         self.storage.get_receipts_by_application_ids.return_value = {
-            UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571"): (
+            "7e0f74aa-9354-47f4-a2a6-3857bf3b7571": (
                 self.factory.rewards.receipt(),
                 UUID(int=1),
                 "run-1",
@@ -260,7 +260,7 @@ class TestAckRewardsUseCase(FactoryFixture):
                 game_run_id="run-1", receipts=(self.factory.rewards.receipt(),)
             ),
         )
-        assert result.accepted_application_ids == (UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571"),)
+        assert result.accepted_application_ids == ("7e0f74aa-9354-47f4-a2a6-3857bf3b7571",)
         self.storage.insert_receipts.assert_not_awaited()
 
     async def test_ack_rejects_wrong_run_grant(self) -> None:
@@ -279,7 +279,7 @@ class TestAckRewardsUseCase(FactoryFixture):
         self.storage.get_receipts_by_application_ids.side_effect = [
             {},
             {
-                UUID("7e0f74aa-9354-47f4-a2a6-3857bf3b7571"): (
+                "7e0f74aa-9354-47f4-a2a6-3857bf3b7571": (
                     self.factory.rewards.receipt(),
                     UUID(int=2),
                     "run-1",
