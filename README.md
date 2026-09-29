@@ -32,7 +32,7 @@
 | src/core/rewards/exceptions.py                                          |       23 |        0 |    100% |           |
 | src/core/rewards/schemas.py                                             |       74 |       13 |     82% |24, 34, 37-38, 55-56, 58, 60, 129, 132, 141, 146-147 |
 | src/core/rewards/storages.py                                            |       27 |        0 |    100% |           |
-| src/core/rewards/use\_cases.py                                          |       87 |        8 |     91% |71-73, 76, 111, 125, 162-164 |
+| src/core/rewards/use\_cases.py                                          |       87 |        7 |     92% |79, 82, 117, 131, 168-170 |
 | src/core/snapshots/\_\_init\_\_.py                                      |        0 |        0 |    100% |           |
 | src/core/snapshots/exceptions.py                                        |       13 |        0 |    100% |           |
 | src/core/snapshots/schemas.py                                           |      170 |       14 |     92% |29, 38, 44, 71, 78-81, 167, 183, 239-240, 246, 266 |
@@ -102,7 +102,7 @@
 | src/infra/storages/postgres/profile\_storage.py                         |       23 |        0 |    100% |           |
 | src/infra/storages/postgres/rewards\_storage.py                         |       46 |        1 |     98% |        84 |
 | src/infra/storages/postgres/snapshot\_storage.py                        |       27 |        0 |    100% |           |
-| **TOTAL**                                                               | **2643** |  **156** | **94%** |           |
+| **TOTAL**                                                               | **2643** |  **155** | **94%** |           |
 
 
 ## Setup coverage badge
