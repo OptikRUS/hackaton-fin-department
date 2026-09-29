@@ -87,9 +87,11 @@ Android commit `50a7637df9619bd824b45e92ce725ec0fef55402`.
 
 `POST /v1/profiles/skills/query` возвращает готовые оценки с `gameRunId`,
 `basedOnHistorySequence`, ровно 12 FIN-кодами, `status` и `policyVersion`.
-`MASTERED`, `PRACTICING`, `NO_DATA`, `HAS_PROBLEM` не выводятся из произвольного
-числа успешных эпизодов. В этом изменении политика расчёта не вводится:
-при отсутствии готовой записи сохраняется `409 ASSESSMENT_NOT_READY`.
+Backend рассчитывает `MASTERED`, `PRACTICING`, `NO_DATA`, `HAS_PROBLEM` после
+каждой новой принятой загрузки по [политике `skills-mvp-v1`](skill-assessment-mvp.md).
+Запрос оценок также обрабатывает ранее принятые проекции без новой загрузки.
+При отсутствии аналитики и готовой записи сохраняется `409 ASSESSMENT_NOT_READY`;
+принятая пустая аналитика даёт все 12 статусов `NO_DATA`.
 Демонстрационный `GET /api/parents/{petId}` не используется встроенным режимом.
 
 ## Родительские материалы

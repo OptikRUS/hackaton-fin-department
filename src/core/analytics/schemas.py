@@ -11,6 +11,9 @@ from src.core.analytics.exceptions import (
     UnsupportedAnalyticsSchemaError,
 )
 
+PROJECTION_VERSION = 4
+EVALUATOR_VERSION = 1
+
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AnalyticsUploadParams:
@@ -50,7 +53,11 @@ class AnalyticsUploadParams:
             self.game_run_id
         ):
             raise InvalidAnalyticsRequestError
-        if (self.schema_version, self.projection_version, self.evaluator_version) != (1, 4, 1):
+        if (self.schema_version, self.projection_version, self.evaluator_version) != (
+            1,
+            PROJECTION_VERSION,
+            EVALUATOR_VERSION,
+        ):
             raise UnsupportedAnalyticsSchemaError
         if type(self.through_history_sequence) is not int or self.through_history_sequence < 0:
             raise InvalidAnalyticsError
@@ -650,6 +657,15 @@ class AnalyticsUploadParams:
             for fact in self.facts
             if not fact["eventId"].startswith("derived:")
         }
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class AssessmentProjection:
+    through_history_sequence: int
+    history_start_sequence: int
+    facts: list[dict[str, Any]]
+    skills: list[dict[str, Any]]
+    revision: int = 0
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
