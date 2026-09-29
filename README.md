@@ -89,8 +89,8 @@
 | src/infra/migrations/versions/0008\_analytics\_projection\_revisions.py |       21 |        0 |    100% |           |
 | src/infra/migrations/versions/\_\_init\_\_.py                           |        0 |        0 |    100% |           |
 | src/infra/observability/\_\_init\_\_.py                                 |        0 |        0 |    100% |           |
-| src/infra/observability/aggregation.py                                  |       49 |        0 |    100% |           |
-| src/infra/observability/business\_metrics.py                            |      349 |       28 |     92% |199, 674, 677-683, 693, 696-699, 702, 705-708, 718, 721, 724, 727, 730, 733, 736-738 |
+| src/infra/observability/aggregation.py                                  |       60 |        1 |     98% |       109 |
+| src/infra/observability/business\_metrics.py                            |      438 |       44 |     90% |202, 274, 277, 289-297, 309-314, 831, 834-840, 850, 853-856, 859, 862-865, 875, 878, 881, 884, 887, 890, 893-895 |
 | src/infra/observability/metrics.py                                      |       14 |        0 |    100% |           |
 | src/infra/observability/tracing.py                                      |       12 |        0 |    100% |           |
 | src/infra/storages/\_\_init\_\_.py                                      |        0 |        0 |    100% |           |
@@ -102,7 +102,7 @@
 | src/infra/storages/postgres/profile\_storage.py                         |       23 |        0 |    100% |           |
 | src/infra/storages/postgres/rewards\_storage.py                         |       46 |        1 |     98% |        84 |
 | src/infra/storages/postgres/snapshot\_storage.py                        |       27 |        0 |    100% |           |
-| **TOTAL**                                                               | **2542** |  **139** | **95%** |           |
+| **TOTAL**                                                               | **2642** |  **156** | **94%** |           |
 
 
 ## Setup coverage badge
