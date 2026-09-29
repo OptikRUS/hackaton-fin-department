@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from src.core.analytics.assessment_evidence import merge_observations
+from src.core.analytics.assessment_policy import calculate_assessments
 from src.core.analytics.exceptions import (
     AnalyticsFactConflictError,
     AnalyticsGameRunNotRegisteredError,
     AnalyticsIdempotencyConflictError,
     AnalyticsStaleError,
     AssessmentNotReadyError,
-    InvalidAnalyticsError,
 )
 from src.core.analytics.schemas import (
     AnalyticsUploadParams,
@@ -17,8 +18,6 @@ from src.core.analytics.schemas import (
 )
 from src.core.analytics.storages import AnalyticsStorage
 from src.core.metrics import MetricsSink
-from src.core.snapshots.exceptions import InvalidSnapshotError
-from src.core.snapshots.schemas import SnapshotArchive
 from src.core.use_case import UseCase
 
 
@@ -35,6 +34,8 @@ class UploadAnalyticsUseCase(UseCase):
     ) -> AnalyticsUploadResult:
         params.validate(idempotency_key=idempotency_key)
         digest = params.request_digest()
+        if not await self.analytics_storage.is_profile_registered(profile_id=params.profile_id):
+            raise AnalyticsGameRunNotRegisteredError
         await self.analytics_storage.ensure_head(
             profile_id=params.profile_id,
             game_run_id=params.game_run_id,
@@ -43,6 +44,9 @@ class UploadAnalyticsUseCase(UseCase):
             profile_id=params.profile_id,
             game_run_id=params.game_run_id,
         )
+        if current_sequence is None:  # ensure_head must create the row before locking.
+            message = "Analytics head disappeared during upload"
+            raise RuntimeError(message)
         previous = await self.analytics_storage.get_batch(
             profile_id=params.profile_id,
             batch_id=params.batch_id,
@@ -53,12 +57,6 @@ class UploadAnalyticsUseCase(UseCase):
             return previous.result
         if params.through_history_sequence < current_sequence:
             raise AnalyticsStaleError
-        archive_json = await self.analytics_storage.get_snapshot_archive(
-            profile_id=params.profile_id
-        )
-        if archive_json is None:
-            raise AnalyticsGameRunNotRegisteredError
-        self._verify_snapshot_source(params=params, archive_json=archive_json)
         originals = params.original_digests()
         stored_originals = await self.analytics_storage.get_original_facts(
             profile_id=params.profile_id,
@@ -69,7 +67,19 @@ class UploadAnalyticsUseCase(UseCase):
             for event_id, fact_digest in originals.items()
         ):
             raise AnalyticsFactConflictError
-        if any(event_id not in originals for event_id in stored_originals):
+        stored_sequences = await self.analytics_storage.get_original_fact_sequences(
+            profile_id=params.profile_id,
+            game_run_id=params.game_run_id,
+        )
+        if any(
+            event_id not in originals
+            and (
+                params.history_start_sequence == 0
+                or (sequence := stored_sequences.get(event_id)) is None
+                or sequence > params.history_start_sequence
+            )
+            for event_id in stored_originals
+        ):
             raise AnalyticsFactConflictError
         new_originals = {
             event_id: fact_digest
@@ -99,6 +109,11 @@ class UploadAnalyticsUseCase(UseCase):
                 profile_id=params.profile_id,
                 game_run_id=params.game_run_id,
                 facts=new_originals,
+                sequences={
+                    fact["eventId"]: fact["sequence"]
+                    for fact in params.facts
+                    if fact["eventId"] in new_originals
+                },
             )
         await self.analytics_storage.insert_projection(params=params)
         if params.through_history_sequence > current_sequence:
@@ -109,26 +124,12 @@ class UploadAnalyticsUseCase(UseCase):
             )
         if self.metrics is not None:
             self.metrics.observe_analytics_batch(created=True, facts=params.facts)
+        await _refresh_assessment(
+            self.analytics_storage,
+            profile_id=params.profile_id,
+            game_run_id=params.game_run_id,
+        )
         return result
-
-    @staticmethod
-    def _verify_snapshot_source(*, params: AnalyticsUploadParams, archive_json: str) -> None:
-        try:
-            archive = SnapshotArchive.from_json(snapshot_json=archive_json).for_run(
-                game_run_id=params.game_run_id,
-            )
-            if archive is None or archive["historySequence"] < params.through_history_sequence:
-                raise AnalyticsGameRunNotRegisteredError
-            source_facts = {
-                fact["eventId"]: AnalyticsUploadParams.digest_value(fact)
-                for entry in archive["history"]
-                if entry["sequence"] <= params.through_history_sequence
-                for fact in entry.get("facts", [])
-            }
-        except (KeyError, TypeError, ValueError, InvalidSnapshotError) as exc:
-            raise InvalidAnalyticsError from exc
-        if source_facts != params.original_digests():
-            raise AnalyticsFactConflictError
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -136,10 +137,42 @@ class GetSkillAssessmentsUseCase(UseCase):
     analytics_storage: AnalyticsStorage
 
     async def execute(self, *, profile_id: UUID, game_run_id: str) -> SkillAssessments:
-        assessment = await self.analytics_storage.get_assessment(
+        # Serialize backfill with uploads to avoid persisting an older assessment
+        # after a newer batch has committed. Query never creates an empty run.
+        await self.analytics_storage.get_head_for_update(
+            profile_id=profile_id, game_run_id=game_run_id
+        )
+        assessment = await _refresh_assessment(
+            self.analytics_storage,
             profile_id=profile_id,
             game_run_id=game_run_id,
         )
         if assessment is None:
+            assessment = await self.analytics_storage.get_assessment(
+                profile_id=profile_id,
+                game_run_id=game_run_id,
+            )
+        if assessment is None:
             raise AssessmentNotReadyError
         return assessment
+
+
+async def _refresh_assessment(
+    storage: AnalyticsStorage,
+    *,
+    profile_id: UUID,
+    game_run_id: str,
+) -> SkillAssessments | None:
+    projections = await storage.get_assessment_projections(
+        profile_id=profile_id,
+        game_run_id=game_run_id,
+    )
+    if not projections:
+        return None
+    assessment = calculate_assessments(
+        game_run_id=game_run_id,
+        based_on_history_sequence=max(p.through_history_sequence for p in projections),
+        observations=merge_observations(projections),
+    )
+    await storage.save_assessment(profile_id=profile_id, assessment=assessment)
+    return assessment

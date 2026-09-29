@@ -3,6 +3,17 @@ from httpx2 import codes
 
 from src.tests.fixtures import APIFixture
 
+EMPTY_MATERIALS = {
+    "materialsAvailable": False,
+    "learningGoal": "",
+    "story": "",
+    "replaceWithParentStory": "",
+    "conversationStarters": [],
+    "parentTakeaway": "",
+    "researchBasis": "",
+    "researchSources": [],
+}
+
 
 class TestGetParentReportAPI(APIFixture):
     @pytest.fixture(autouse=True)
@@ -28,72 +39,84 @@ class TestGetParentReportAPI(APIFixture):
                     "title": "Сравнивает денежные суммы",
                     "status": "MASTERED",
                     "isMastered": True,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-02",
                     "title": "Планирует бюджет на период",
                     "status": "NO_DATA",
                     "isMastered": None,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-03",
                     "title": "Учитывает обязательные нужды перед желаниями",
                     "status": "PRACTICING",
                     "isMastered": False,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-04",
                     "title": "Следит, чтобы денег хватало до следующего дохода",
                     "status": "NO_DATA",
                     "isMastered": None,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-05",
                     "title": "Последовательно собирает на выбранную цель",
                     "status": "MASTERED",
                     "isMastered": True,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-06",
                     "title": "Откладывает желанную покупку ради приоритета",
                     "status": "NO_DATA",
                     "isMastered": None,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-07",
                     "title": "Создаёт запас на непредвиденные расходы",
                     "status": "NO_DATA",
                     "isMastered": None,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-08",
                     "title": "Перестраивает действия после неожиданной траты",
                     "status": "PRACTICING",
                     "isMastered": False,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-09",
                     "title": "Сопоставляет денежные и другие затраты",
                     "status": "NO_DATA",
                     "isMastered": None,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-10",
                     "title": "Планирует дополнительный заработок",
                     "status": "NO_DATA",
                     "isMastered": None,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-11",
                     "title": "Разбирает финансовые последствия и меняет решение",
                     "status": "NO_DATA",
                     "isMastered": None,
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-12",
                     "title": "Понимает свои доходы и расходы",
                     "status": "NO_DATA",
                     "isMastered": None,
+                    **EMPTY_MATERIALS,
                 },
             ],
             "isDemo": True,
@@ -113,3 +136,32 @@ class TestGetParentReportAPI(APIFixture):
 
         assert response.status_code == codes.OK
         assert response.json()["pet"]["id"] == "9f1c2d3e4a5b6078"
+
+    async def test_openapi_requires_camel_case_material_fields(self) -> None:
+        response = await self.api.client.get(url="/openapi.json")
+
+        assert response.status_code == codes.OK
+        schema = response.json()["components"]["schemas"]["SkillResponse"]
+        material_types = {
+            "learningGoal": "string",
+            "story": "string",
+            "replaceWithParentStory": "string",
+            "conversationStarters": "array",
+            "parentTakeaway": "string",
+            "researchBasis": "string",
+            "researchSources": "array",
+        }
+        expected_fields = {
+            "id",
+            "title",
+            "status",
+            "isMastered",
+            "materialsAvailable",
+            *material_types,
+        }
+        assert set(schema["properties"]) == expected_fields
+        assert set(schema["required"]) == expected_fields
+        for field, field_type in material_types.items():
+            assert schema["properties"][field]["type"] == field_type
+            if field_type == "array":
+                assert schema["properties"][field]["items"] == {"type": "string"}

@@ -1,0 +1,11 @@
+{
+  "deviceId": "9f1c2d3e4a5b6078",
+  "schemaVersion": 1,
+  "pet": {
+    "name": "Рыжик",
+    "age": "CUB",
+    "color": "COPPER",
+    "temperament": "Curious",
+    "selectedLookId": "PLAIN"
+  }
+}

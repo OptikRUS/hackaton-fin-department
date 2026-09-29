@@ -11,6 +11,9 @@ from src.core.analytics.exceptions import (
     UnsupportedAnalyticsSchemaError,
 )
 
+PROJECTION_VERSION = 4
+EVALUATOR_VERSION = 1
+
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AnalyticsUploadParams:
@@ -23,6 +26,7 @@ class AnalyticsUploadParams:
     facts: list[dict[str, Any]]
     skills: list[dict[str, Any]]
     schema_version: int = 1
+    history_start_sequence: int = 0
 
     @staticmethod
     def _nonempty(value: object) -> bool:
@@ -49,9 +53,18 @@ class AnalyticsUploadParams:
             self.game_run_id
         ):
             raise InvalidAnalyticsRequestError
-        if (self.schema_version, self.projection_version, self.evaluator_version) != (1, 4, 1):
+        if (self.schema_version, self.projection_version, self.evaluator_version) != (
+            1,
+            PROJECTION_VERSION,
+            EVALUATOR_VERSION,
+        ):
             raise UnsupportedAnalyticsSchemaError
         if type(self.through_history_sequence) is not int or self.through_history_sequence < 0:
+            raise InvalidAnalyticsError
+        if (
+            type(self.history_start_sequence) is not int
+            or not 0 <= self.history_start_sequence <= self.through_history_sequence
+        ):
             raise InvalidAnalyticsError
         if not isinstance(self.facts, list) or not isinstance(self.skills, list):
             raise InvalidAnalyticsError
@@ -79,6 +92,10 @@ class AnalyticsUploadParams:
                 or not self._nonempty(fact.get("actionId"))
                 or type(fact.get("sequence")) is not int
                 or not 0 <= fact["sequence"] <= self.through_history_sequence
+                or (
+                    self.history_start_sequence > 0
+                    and fact["sequence"] <= self.history_start_sequence
+                )
             ):
                 raise InvalidAnalyticsError
             detail = fact.get("detail")
@@ -618,7 +635,7 @@ class AnalyticsUploadParams:
             raise InvalidAnalyticsError
 
     def request_digest(self) -> str:
-        return self.digest_value({
+        value: dict[str, Any] = {
             "profileId": str(self.profile_id),
             "batchId": self.batch_id,
             "gameRunId": self.game_run_id,
@@ -628,7 +645,11 @@ class AnalyticsUploadParams:
             "schemaVersion": self.schema_version,
             "facts": self.facts,
             "skills": self.skills,
-        })
+        }
+        # Existing frozen batches omit the zero start; retain their exact digest.
+        if self.history_start_sequence:
+            value["historyStartSequence"] = self.history_start_sequence
+        return self.digest_value(value)
 
     def original_digests(self) -> dict[str, str]:
         return {
@@ -636,6 +657,15 @@ class AnalyticsUploadParams:
             for fact in self.facts
             if not fact["eventId"].startswith("derived:")
         }
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class AssessmentProjection:
+    through_history_sequence: int
+    history_start_sequence: int
+    facts: list[dict[str, Any]]
+    skills: list[dict[str, Any]]
+    revision: int = 0
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

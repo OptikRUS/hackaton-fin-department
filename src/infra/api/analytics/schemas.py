@@ -104,6 +104,7 @@ class AnalyticsUploadRequest(StrictBoundaryModel):
     schema_version: Annotated[int, Field(ge=1)] = 1
     projection_version: Annotated[int, Field(ge=1)] = 4
     evaluator_version: Annotated[int, Field(ge=1)] = 1
+    history_start_sequence: Annotated[int, Field(ge=0, strict=True)] = 0
 
     def to_domain(self) -> AnalyticsUploadParams:
         return AnalyticsUploadParams(
@@ -116,6 +117,7 @@ class AnalyticsUploadRequest(StrictBoundaryModel):
             facts=[fact.dict(exclude_unset=True) for fact in self.facts],
             skills=[skill.dict(exclude_unset=True) for skill in self.skills],
             schema_version=self.schema_version,
+            history_start_sequence=self.history_start_sequence,
         )
 
 
