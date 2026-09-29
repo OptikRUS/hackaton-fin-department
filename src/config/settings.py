@@ -46,11 +46,18 @@ class OTelSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="OTEL_")
 
 
+class AggregationSettings(BaseSettings):
+    INTERVAL_SECONDS: int = 60
+
+    model_config = SettingsConfigDict(env_prefix="AGGREGATION_")
+
+
 class Settings(BaseSettings):
     APP: AppSettings = AppSettings()
     CORS: CORSSettings = CORSSettings()
     POSTGRES: PostgresSettings = PostgresSettings()
     OTEL: OTelSettings = OTelSettings()
+    AGGREGATION: AggregationSettings = AggregationSettings()
 
 
 settings = Settings()

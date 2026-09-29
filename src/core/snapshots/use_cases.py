@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from src.core.metrics import MetricsSink
 from src.core.snapshots.exceptions import (
     SnapshotGameRunConflictError,
     SnapshotIdempotencyConflictError,
@@ -20,6 +21,7 @@ from src.core.use_case import UseCase
 @dataclass(frozen=True, slots=True, kw_only=True)
 class UploadSnapshotUseCase(UseCase):
     snapshot_storage: SnapshotStorage
+    metrics: MetricsSink | None = None
 
     async def execute(
         self,
@@ -76,15 +78,20 @@ class UploadSnapshotUseCase(UseCase):
                 result=result,
             ),
         )
+        if self.metrics is not None:
+            self.metrics.observe_snapshot_upload(created=result.created)
         return result
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class DownloadSnapshotUseCase(UseCase):
     snapshot_storage: SnapshotStorage
+    metrics: MetricsSink | None = None
 
     async def execute(self, *, profile_id: UUID) -> Snapshot:
         snapshot = await self.snapshot_storage.get_latest(profile_id=profile_id)
         if snapshot is None:
             raise SnapshotNotFoundError
+        if self.metrics is not None:
+            self.metrics.observe_snapshot_download()
         return snapshot

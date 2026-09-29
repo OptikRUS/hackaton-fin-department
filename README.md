@@ -53,6 +53,33 @@ FastAPI и SQL-запросов SQLAlchemy). `/health` и `/metrics` из тре
 - `OTEL_ENDPOINT` — OTLP gRPC endpoint, по умолчанию `http://localhost:4317`
 - `OTEL_TIMEOUT` — таймаут экспорта в секундах, по умолчанию `10`
 
+### Бизнес-метрики
+
+В дополнение к инфраструктурным метрикам сервис экспортирует бизнес-метрики
+с префиксом `fin_` (игровая аналитика: загрузки снапшотов, факты аналитики
+по типам, покупки/накопления/запасы, награды, распределения миров по главам
+и балансам). Метрики двух видов:
+
+- счётчики, увеличиваются в use cases при обработке запросов
+  (`fin_snapshot_uploads_total`, `fin_analytics_facts_total{detail_type,actor,mode}`,
+  `fin_interactions_total{name}`, `fin_optional_purchases_total`, …);
+- мгновенные распределения и гейджи по сохранённым мирам — их пересчитывает
+  фоновая задача `Aggregator` раз в `AGGREGATION_INTERVAL_SECONDS` секунд
+  (по умолчанию 60): `fin_players_by_story_act{act}`, `fin_pet_balance_*`,
+  `fin_plan_*`, `fin_goal_projects_completed{goal}`, `fin_skill_episodes_avg`, …
+  Свежесть агрегата — `fin_aggregation_last_success_unixtime`, ошибки —
+  `fin_aggregation_errors_total` / `fin_aggregation_parse_errors_total`.
+
+Акт (глава) истории восстанавливается из `state.story.currentDayId` снапшота:
+`figma-chapter-1-day-v1` → `act-1`, `campaign-choice-v1:act-N:day` → `act-N`.
+
+Дашборд Grafana — `game-analytics` в `fin-department-k8s`
+(`infrastructure/base/controllers/monitoring/dashboards/`).
+
+Настройка (префикс `AGGREGATION_`):
+
+- `AGGREGATION_INTERVAL_SECONDS` — период пересчёта агрегатов, по умолчанию `60`
+
 ## Регистрация устройства и питомца
 
 ```bash

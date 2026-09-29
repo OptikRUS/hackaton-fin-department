@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+from src.core.metrics import MetricsSink
 from src.core.rewards.exceptions import (
     InvalidRewardCursorError,
     InvalidRewardError,
@@ -28,6 +29,7 @@ from src.core.use_case import UseCase
 @dataclass(frozen=True, slots=True, kw_only=True)
 class IssueRewardUseCase(UseCase):
     storage: RewardStorage
+    metrics: MetricsSink | None = None
     permitted_accessory_ids: frozenset[str] = frozenset({
         "starter-bandana-v1",
         "starter-backpack-v1",
@@ -84,6 +86,8 @@ class IssueRewardUseCase(UseCase):
             reward=issued,
             idempotency_key=idempotency_key,
         )
+        if self.metrics is not None:
+            self.metrics.observe_reward_issued(reward_type=reward.type, created=True)
         return IssuedReward(reward=issued, created=True)
 
 
@@ -132,6 +136,7 @@ class ListRewardsUseCase(UseCase):
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AckRewardsUseCase(UseCase):
     storage: RewardStorage
+    metrics: MetricsSink | None = None
 
     async def execute(
         self,
@@ -208,6 +213,8 @@ class AckRewardsUseCase(UseCase):
             idempotency_key=idempotency_key,
             digest=digest,
         )
+        if self.metrics is not None:
+            self.metrics.observe_rewards_acknowledged(outcomes=[item.outcome for item in fresh])
         return AckRewardsResult(
             game_run_id=params.game_run_id,
             accepted_application_ids=tuple(application_ids),
