@@ -273,16 +273,24 @@ class AnalyticsOriginalFactModel(Base):
     game_run_id: Mapped[str] = mapped_column(String, primary_key=True)
     event_id: Mapped[str] = mapped_column(String, primary_key=True)
     fact_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    sequence: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
 
 class AnalyticsProjectionModel(Base):
     __tablename__ = "analytics_projections"
+    __table_args__ = (
+        CheckConstraint(
+            "history_start_sequence >= 0 AND history_start_sequence <= through_history_sequence",
+            name="valid_history_range",
+        ),
+    )
 
     profile_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
     game_run_id: Mapped[str] = mapped_column(String, primary_key=True)
     projection_version: Mapped[int] = mapped_column(Integer, primary_key=True)
     evaluator_version: Mapped[int] = mapped_column(Integer, primary_key=True)
     through_history_sequence: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    history_start_sequence: Mapped[int] = mapped_column(BigInteger, primary_key=True, default=0)
     facts: Mapped[list[dict[str, object]]] = mapped_column(JSONB, nullable=False)
     skills: Mapped[list[dict[str, object]]] = mapped_column(JSONB, nullable=False)
 

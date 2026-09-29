@@ -11,11 +11,21 @@ class MemoryAnalyticsStorage(AnalyticsStorage):
     heads: dict[tuple[UUID, str], int] = field(default_factory=dict)
     batches: dict[tuple[UUID, str], StoredBatch] = field(default_factory=dict)
     originals: dict[tuple[UUID, str], dict[str, str]] = field(default_factory=dict)
-    projections: dict[tuple[UUID, str, int, int, int], AnalyticsUploadParams] = field(
+    projections: dict[tuple[UUID, str, int, int, int, int], AnalyticsUploadParams] = field(
         default_factory=dict
     )
     assessments: dict[tuple[UUID, str], SkillAssessments] = field(default_factory=dict)
+    registered_profiles: set[UUID] = field(default_factory=lambda: {UUID(int=1)})
+    original_sequences: dict[tuple[UUID, str], dict[str, int | None]] = field(default_factory=dict)
     archive: str | None = json.dumps({"runId": "run-1", "historySequence": 0, "history": []})
+
+    async def is_profile_registered(self, *, profile_id: UUID) -> bool:
+        return profile_id in self.registered_profiles
+
+    async def get_original_fact_sequences(
+        self, *, profile_id: UUID, game_run_id: str
+    ) -> dict[str, int | None]:
+        return self.original_sequences.get((profile_id, game_run_id), {}).copy()
 
     async def get_snapshot_archive(self, *, profile_id: UUID) -> str | None:
         return self.archive
@@ -33,9 +43,17 @@ class MemoryAnalyticsStorage(AnalyticsStorage):
         return self.originals.get((profile_id, game_run_id), {}).copy()
 
     async def insert_original_facts(
-        self, *, profile_id: UUID, game_run_id: str, facts: dict[str, str]
+        self,
+        *,
+        profile_id: UUID,
+        game_run_id: str,
+        facts: dict[str, str],
+        sequences: dict[str, int] | None = None,
     ) -> None:
         self.originals.setdefault((profile_id, game_run_id), {}).update(facts)
+        self.original_sequences.setdefault((profile_id, game_run_id), {}).update({
+            event_id: (sequences or {}).get(event_id) for event_id in facts
+        })
 
     async def insert_projection(self, *, params: AnalyticsUploadParams) -> None:
         key = (
@@ -44,6 +62,7 @@ class MemoryAnalyticsStorage(AnalyticsStorage):
             params.projection_version,
             params.evaluator_version,
             params.through_history_sequence,
+            params.history_start_sequence,
         )
         self.projections[key] = params
 

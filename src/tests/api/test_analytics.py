@@ -70,6 +70,31 @@ class TestUploadAnalyticsAPI(APIFixture, ContainerFixture, FactoryFixture):
             idempotency_key="batch-1",
         )
 
+    async def test_restored_history_range_is_accepted_at_http_boundary(self) -> None:
+        self.use_case.execute.return_value = AnalyticsUploadResult(
+            batch_id="restored",
+            game_run_id="run-1",
+            accepted_through_history_sequence=901,
+            accepted_event_ids=(),
+            created=True,
+        )
+        response = await self.api.client.post(
+            "/v1/profiles/analytics",
+            headers={"Idempotency-Key": "restored"},
+            json={
+                "deviceId": "9f1c2d3e4a5b6078",
+                "batchId": "restored",
+                "gameRunId": "run-1",
+                "throughHistorySequence": 901,
+                "historyStartSequence": 900,
+                "facts": [],
+                "skills": self.factory.analytics.upload_params(profile_id=UUID(int=1)).skills,
+            },
+        )
+        assert response.status_code == codes.OK
+        assert response.json()["acceptedThroughHistorySequence"] == 901
+        assert self.use_case.execute.call_args.kwargs["params"].history_start_sequence == 900
+
     async def test_replay_ack_returns_ok(self) -> None:
         self.use_case.execute.return_value = AnalyticsUploadResult(
             batch_id="batch-1",
