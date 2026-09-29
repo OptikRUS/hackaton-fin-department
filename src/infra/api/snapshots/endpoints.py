@@ -43,6 +43,7 @@ async def upload_snapshot(
     path="/snapshot/download",
     status_code=status.HTTP_200_OK,
     response_model=SnapshotDownloadResponse,
+    response_model_exclude_none=True,
     responses={status.HTTP_404_NOT_FOUND: {"model": SnapshotError}},
 )
 async def download_snapshot(

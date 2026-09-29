@@ -7,7 +7,6 @@ from src.core.analytics.exceptions import (
     AnalyticsIdempotencyConflictError,
     AnalyticsStaleError,
     AssessmentNotReadyError,
-    InvalidAnalyticsError,
 )
 from src.core.analytics.schemas import (
     AnalyticsUploadParams,
@@ -16,8 +15,6 @@ from src.core.analytics.schemas import (
     StoredBatch,
 )
 from src.core.analytics.storages import AnalyticsStorage
-from src.core.snapshots.exceptions import InvalidSnapshotError
-from src.core.snapshots.schemas import SnapshotArchive
 from src.core.use_case import UseCase
 
 
@@ -33,6 +30,8 @@ class UploadAnalyticsUseCase(UseCase):
     ) -> AnalyticsUploadResult:
         params.validate(idempotency_key=idempotency_key)
         digest = params.request_digest()
+        if not await self.analytics_storage.is_profile_registered(profile_id=params.profile_id):
+            raise AnalyticsGameRunNotRegisteredError
         await self.analytics_storage.ensure_head(
             profile_id=params.profile_id,
             game_run_id=params.game_run_id,
@@ -51,12 +50,6 @@ class UploadAnalyticsUseCase(UseCase):
             return previous.result
         if params.through_history_sequence < current_sequence:
             raise AnalyticsStaleError
-        archive_json = await self.analytics_storage.get_snapshot_archive(
-            profile_id=params.profile_id
-        )
-        if archive_json is None:
-            raise AnalyticsGameRunNotRegisteredError
-        self._verify_snapshot_source(params=params, archive_json=archive_json)
         originals = params.original_digests()
         stored_originals = await self.analytics_storage.get_original_facts(
             profile_id=params.profile_id,
@@ -67,7 +60,19 @@ class UploadAnalyticsUseCase(UseCase):
             for event_id, fact_digest in originals.items()
         ):
             raise AnalyticsFactConflictError
-        if any(event_id not in originals for event_id in stored_originals):
+        stored_sequences = await self.analytics_storage.get_original_fact_sequences(
+            profile_id=params.profile_id,
+            game_run_id=params.game_run_id,
+        )
+        if any(
+            event_id not in originals
+            and (
+                params.history_start_sequence == 0
+                or (sequence := stored_sequences.get(event_id)) is None
+                or sequence > params.history_start_sequence
+            )
+            for event_id in stored_originals
+        ):
             raise AnalyticsFactConflictError
         new_originals = {
             event_id: fact_digest
@@ -97,6 +102,11 @@ class UploadAnalyticsUseCase(UseCase):
                 profile_id=params.profile_id,
                 game_run_id=params.game_run_id,
                 facts=new_originals,
+                sequences={
+                    fact["eventId"]: fact["sequence"]
+                    for fact in params.facts
+                    if fact["eventId"] in new_originals
+                },
             )
         await self.analytics_storage.insert_projection(params=params)
         if params.through_history_sequence > current_sequence:
@@ -106,25 +116,6 @@ class UploadAnalyticsUseCase(UseCase):
                 through_history_sequence=params.through_history_sequence,
             )
         return result
-
-    @staticmethod
-    def _verify_snapshot_source(*, params: AnalyticsUploadParams, archive_json: str) -> None:
-        try:
-            archive = SnapshotArchive.from_json(snapshot_json=archive_json).for_run(
-                game_run_id=params.game_run_id,
-            )
-            if archive is None or archive["historySequence"] < params.through_history_sequence:
-                raise AnalyticsGameRunNotRegisteredError
-            source_facts = {
-                fact["eventId"]: AnalyticsUploadParams.digest_value(fact)
-                for entry in archive["history"]
-                if entry["sequence"] <= params.through_history_sequence
-                for fact in entry.get("facts", [])
-            }
-        except (KeyError, TypeError, ValueError, InvalidSnapshotError) as exc:
-            raise InvalidAnalyticsError from exc
-        if source_facts != params.original_digests():
-            raise AnalyticsFactConflictError
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

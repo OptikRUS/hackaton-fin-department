@@ -5,6 +5,7 @@ from pydantic import Field
 from src.core.profiles.schemas import DeviceId
 from src.core.snapshots.schemas import (
     Snapshot,
+    SnapshotArchive,
     UploadSnapshotParams,
     UploadSnapshotResult,
 )
@@ -15,15 +16,18 @@ class SnapshotUploadRequest(BoundaryModel):
     device_id: Annotated[str, Field(min_length=1)]
     upload_id: Annotated[str, Field(min_length=1, max_length=255)]
     expected_server_revision: (
-        Annotated[int, Field(ge=1, json_schema_extra={"format": "int64"})] | None
+        Annotated[int, Field(strict=True, ge=1, json_schema_extra={"format": "int64"})] | None
     )
     game_run_id: Annotated[str, Field(min_length=1)]
-    through_history_sequence: Annotated[int, Field(ge=0, json_schema_extra={"format": "int64"})]
+    through_history_sequence: Annotated[
+        int, Field(strict=True, ge=0, json_schema_extra={"format": "int64"})
+    ]
     current_content_fingerprint: Annotated[str, Field(min_length=1)]
-    snapshot_format_version: Annotated[int, Field(ge=1, le=5)]
+    snapshot_format_version: Annotated[int, Field(strict=True, ge=1, le=5)]
     checksum: Annotated[str, Field(pattern=r"^[a-f0-9]{64}$")]
     snapshot_json: Annotated[str, Field(min_length=1)]
     schema_version: Literal[1] = 1
+    payload_kind: Literal["CURRENT_WORLD"] | None = None
 
     def to_domain(self) -> UploadSnapshotParams:
         return UploadSnapshotParams(
@@ -37,6 +41,7 @@ class SnapshotUploadRequest(BoundaryModel):
             checksum=self.checksum,
             snapshot_json=self.snapshot_json,
             schema_version=self.schema_version,
+            payload_kind=self.payload_kind,
         )
 
 
@@ -62,6 +67,7 @@ class SnapshotDownloadResponse(BoundaryModel):
     current_content_fingerprint: Annotated[str, Field(min_length=1)]
     snapshot_json: Annotated[str, Field(min_length=1)]
     schema_version: Literal[1] = 1
+    payload_kind: Literal["CURRENT_WORLD"] | None = None
 
     @classmethod
     def from_domain(cls, *, snapshot: Snapshot) -> Self:
@@ -71,6 +77,11 @@ class SnapshotDownloadResponse(BoundaryModel):
             current_content_fingerprint=snapshot.current_content_fingerprint,
             snapshot_json=snapshot.snapshot_json,
             schema_version=1,
+            payload_kind=(
+                "CURRENT_WORLD"
+                if SnapshotArchive.from_json(snapshot_json=snapshot.snapshot_json).is_current_world
+                else None
+            ),
         )
 
 
