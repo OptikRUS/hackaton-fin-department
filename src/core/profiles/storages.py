@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from src.core.profiles.schemas import RegisteredProfile, RegistrationReceipt
+from src.core.profiles.schemas import RegisteredPet, RegisteredProfile, RegistrationReceipt
 
 
 class ProfileStorage(ABC):
@@ -10,6 +10,9 @@ class ProfileStorage(ABC):
 
     @abstractmethod
     async def create_profile(self, *, profile: RegisteredProfile) -> RegisteredProfile | None: ...
+
+    @abstractmethod
+    async def update_pet(self, *, profile_id: UUID, pet: RegisteredPet) -> None: ...
 
     @abstractmethod
     async def get_registration(

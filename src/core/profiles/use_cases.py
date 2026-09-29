@@ -44,8 +44,10 @@ class RegisterProfileUseCase(UseCase):
             if receipt.request_digest != request_digest:
                 raise RegistrationIdempotencyConflictError
             return receipt.result
-        if profile is None or profile.device_id != params.device_id or profile.pet != params.pet:
+        if profile is None or profile.device_id != params.device_id:
             raise ProfileConflictError
+        if profile.pet != params.pet:
+            await self.storage.update_pet(profile_id=params.profile_id, pet=params.pet)
         result = RegisterProfileResult(
             device_id=params.device_id, created=created_profile is not None
         )
