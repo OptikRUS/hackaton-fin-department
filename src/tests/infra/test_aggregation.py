@@ -9,7 +9,7 @@ from prometheus_client import CollectorRegistry
 
 from src.infra.observability.aggregation import Aggregator
 from src.infra.observability.business_metrics import BusinessMetrics
-from src.tests.helpers.worlds import world_snapshot_json
+from src.tests.helpers.worlds import legacy_archive_json, legacy_fact, world_snapshot_json
 
 
 class _BrokenStorageError(RuntimeError):
@@ -26,11 +26,14 @@ class _FakeResult:
 
 class _FakeSession:
     def __init__(
-        self, heads: list[tuple[str, str]], counts: int = 0, skills: list[Any] | None = None
+        self,
+        heads: list[tuple[Any, str, str]],
+        counts: int = 0,
+        projections: list[tuple[Any, str, int, list[Any], list[Any]]] | None = None,
     ) -> None:
         self._heads = heads
         self._counts = counts
-        self._skills = skills or []
+        self._projections = projections or []
         self.execute_calls = 0
 
     async def __aenter__(self) -> Self:
@@ -43,7 +46,7 @@ class _FakeSession:
         self.execute_calls += 1
         if self.execute_calls == 1:
             return _FakeResult(self._heads)
-        return _FakeResult(self._skills)
+        return _FakeResult(self._projections)
 
     async def scalar(self, _statement: object) -> int:
         return self._counts
@@ -56,14 +59,14 @@ def metrics() -> BusinessMetrics:
 
 async def test_collect_once_publishes_worlds(metrics: BusinessMetrics) -> None:
     heads = [
-        ("run-1", world_snapshot_json()),
-        ("run-1", world_snapshot_json()),
-        ("run-2", "garbage"),
+        (uuid4(), "run-1", world_snapshot_json()),
+        (uuid4(), "run-1", world_snapshot_json()),
+        (uuid4(), "run-2", "garbage"),
     ]
     session = _FakeSession(
         heads=heads,
         counts=2,
-        skills=[(uuid4(), "run-1", 12, [{"skillId": "FIN-03", "completedEpisodes": 2}])],
+        projections=[(uuid4(), "run-9", 12, [], [{"skillId": "FIN-03", "completedEpisodes": 2}])],
     )
 
     def session_factory() -> AbstractAsyncContextManager[Any]:
@@ -78,6 +81,64 @@ async def test_collect_once_publishes_worlds(metrics: BusinessMetrics) -> None:
     assert metrics.registry.get_sample_value("fin_profiles_total") == 2
     assert metrics.registry.get_sample_value("fin_aggregation_parse_errors_total") == 1
     assert metrics.registry.get_sample_value("fin_aggregation_last_success_unixtime") is not None
+    assert metrics.registry.get_sample_value("fin_skill_assessed_worlds_total") == 1
+
+
+async def test_collect_once_counts_stored_facts_without_double_counting(
+    metrics: BusinessMetrics,
+) -> None:
+    profile = uuid4()
+    heads = [(profile, "run-1", legacy_archive_json())]
+    session = _FakeSession(
+        heads=heads,
+        counts=1,
+        projections=[
+            (
+                profile,
+                "run-1",
+                12,
+                [legacy_fact("e9", {"_type": "interaction", "name": "BeginDay"})],
+                [],
+            ),
+        ],
+    )
+
+    def session_factory() -> AbstractAsyncContextManager[Any]:
+        return session
+
+    aggregator = Aggregator(metrics=metrics, interval_seconds=60, session_factory=session_factory)
+
+    await aggregator.collect_once()
+
+    # факты из истории снапшота пропущены: для этого прогона есть projections
+    assert metrics.registry.get_sample_value("fin_interactions_stored", {"name": "BeginDay"}) == 1
+    assert (
+        metrics.registry.get_sample_value("fin_interactions_stored", {"name": "RenamePet"}) is None
+    )
+    assert (
+        metrics.registry.get_sample_value("fin_facts_stored", {"detail_type": "interaction"}) == 1
+    )
+
+
+async def test_collect_once_counts_facts_from_archive_without_projections(
+    metrics: BusinessMetrics,
+) -> None:
+    heads = [(uuid4(), "run-1", legacy_archive_json())]
+    session = _FakeSession(heads=heads, counts=1, projections=[])
+
+    def session_factory() -> AbstractAsyncContextManager[Any]:
+        return session
+
+    aggregator = Aggregator(metrics=metrics, interval_seconds=60, session_factory=session_factory)
+
+    await aggregator.collect_once()
+
+    assert metrics.registry.get_sample_value("fin_interactions_stored", {"name": "RenamePet"}) == 1
+    assert metrics.registry.get_sample_value("fin_purchases_stored", {"purchased": "True"}) == 1
+    assert (
+        metrics.registry.get_sample_value("fin_purchase_amount_stored", {"purchased": "True"}) == 50
+    )
+    assert metrics.registry.get_sample_value("fin_budget_amount_stored", {"bucket": "needs"}) == 500
 
 
 async def test_run_forever_collects_until_stop(metrics: BusinessMetrics) -> None:
