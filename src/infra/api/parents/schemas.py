@@ -1,6 +1,7 @@
 from enum import StrEnum
 
 from src.infra.api.boundary import BoundaryModel
+from src.infra.api.parents.skill_content import SKILL_CONTENT
 
 
 class SkillStatus(StrEnum):
@@ -23,6 +24,13 @@ class SkillResponse(BoundaryModel):
     title: str
     status: SkillStatus
     is_mastered: bool | None
+    learning_goal: str
+    story: str
+    replace_with_parent_story: str
+    conversation_starters: list[str]
+    parent_takeaway: str
+    research_basis: str
+    research_sources: list[str]
 
 
 class ParentResponse(BoundaryModel):
@@ -48,12 +56,24 @@ DEMO_SKILLS: tuple[tuple[str, str, SkillStatus], ...] = (
 
 
 def demo_skills() -> list[SkillResponse]:
-    return [
-        SkillResponse(
-            id=skill_id,
-            title=title,
-            status=status,
-            is_mastered=(None if status == SkillStatus.NO_DATA else status == SkillStatus.MASTERED),
+    skills: list[SkillResponse] = []
+    for skill_id, title, status in DEMO_SKILLS:
+        content = SKILL_CONTENT[skill_id]
+        skills.append(
+            SkillResponse(
+                id=skill_id,
+                title=title,
+                status=status,
+                is_mastered=(
+                    None if status == SkillStatus.NO_DATA else status == SkillStatus.MASTERED
+                ),
+                learning_goal=content.learning_goal,
+                story=content.story,
+                replace_with_parent_story=content.replace_with_parent_story,
+                conversation_starters=list(content.conversation_starters),
+                parent_takeaway=content.parent_takeaway,
+                research_basis=content.research_basis,
+                research_sources=list(content.research_sources),
+            ),
         )
-        for skill_id, title, status in DEMO_SKILLS
-    ]
+    return skills
