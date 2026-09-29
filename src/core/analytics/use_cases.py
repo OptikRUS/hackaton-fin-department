@@ -16,6 +16,7 @@ from src.core.analytics.schemas import (
     StoredBatch,
 )
 from src.core.analytics.storages import AnalyticsStorage
+from src.core.metrics import MetricsSink
 from src.core.snapshots.exceptions import InvalidSnapshotError
 from src.core.snapshots.schemas import SnapshotArchive
 from src.core.use_case import UseCase
@@ -24,6 +25,7 @@ from src.core.use_case import UseCase
 @dataclass(frozen=True, slots=True, kw_only=True)
 class UploadAnalyticsUseCase(UseCase):
     analytics_storage: AnalyticsStorage
+    metrics: MetricsSink | None = None
 
     async def execute(  # noqa: C901
         self,
@@ -105,6 +107,8 @@ class UploadAnalyticsUseCase(UseCase):
                 game_run_id=params.game_run_id,
                 through_history_sequence=params.through_history_sequence,
             )
+        if self.metrics is not None:
+            self.metrics.observe_analytics_batch(created=True, facts=params.facts)
         return result
 
     @staticmethod

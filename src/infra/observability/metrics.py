@@ -9,6 +9,8 @@ from src.config.settings import settings
 
 EXCLUDED_URLS = "health,metrics"
 
+REGISTRY = CollectorRegistry()
+
 
 def create_metrics_asgi_app() -> ASGIApp:
     resource = Resource.create(
@@ -17,7 +19,6 @@ def create_metrics_asgi_app() -> ASGIApp:
             "service.version": settings.APP.VERSION,
         },
     )
-    registry = CollectorRegistry()
-    reader = PrometheusMetricReader(registry=registry)
+    reader = PrometheusMetricReader(registry=REGISTRY)
     metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[reader]))
-    return make_asgi_app(registry=registry)
+    return make_asgi_app(registry=REGISTRY)

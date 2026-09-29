@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from src.core.metrics import MetricsSink
 from src.core.profiles.exceptions import (
     ProfileConflictError,
     RegistrationIdempotencyConflictError,
@@ -17,6 +18,7 @@ from src.core.use_case import UseCase
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RegisterProfileUseCase(UseCase):
     storage: ProfileStorage
+    metrics: MetricsSink | None = None
 
     async def execute(
         self,
@@ -55,4 +57,6 @@ class RegisterProfileUseCase(UseCase):
                 result=result,
             ),
         )
+        if self.metrics is not None:
+            self.metrics.observe_profile_registration(created=result.created)
         return result
