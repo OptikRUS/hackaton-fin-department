@@ -291,6 +291,9 @@ class AnalyticsProjectionModel(Base):
     evaluator_version: Mapped[int] = mapped_column(Integer, primary_key=True)
     through_history_sequence: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     history_start_sequence: Mapped[int] = mapped_column(BigInteger, primary_key=True, default=0)
+    revision: Mapped[int] = mapped_column(
+        BigInteger, primary_key=True, default=0, server_default="0"
+    )
     facts: Mapped[list[dict[str, object]]] = mapped_column(JSONB, nullable=False)
     skills: Mapped[list[dict[str, object]]] = mapped_column(JSONB, nullable=False)
 

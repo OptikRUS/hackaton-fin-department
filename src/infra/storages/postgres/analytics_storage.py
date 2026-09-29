@@ -1,12 +1,15 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.analytics.schemas import (
+    EVALUATOR_VERSION,
+    PROJECTION_VERSION,
     AnalyticsUploadParams,
+    AssessmentProjection,
     SkillAssessments,
     StoredBatch,
 )
@@ -62,7 +65,7 @@ class PostgresAnalyticsStorage(AnalyticsStorage):
             ),
         )
 
-    async def get_head_for_update(self, *, profile_id: UUID, game_run_id: str) -> int:
+    async def get_head_for_update(self, *, profile_id: UUID, game_run_id: str) -> int | None:
         return (
             await self.session.scalars(
                 select(AnalyticsHeadModel.through_history_sequence)
@@ -72,7 +75,7 @@ class PostgresAnalyticsStorage(AnalyticsStorage):
                 )
                 .with_for_update(),
             )
-        ).one()
+        ).one_or_none()
 
     async def get_batch(self, *, profile_id: UUID, batch_id: str) -> StoredBatch | None:
         model = await self.session.scalar(
@@ -118,28 +121,26 @@ class PostgresAnalyticsStorage(AnalyticsStorage):
         )
 
     async def insert_projection(self, *, params: AnalyticsUploadParams) -> None:
-        statement = insert(AnalyticsProjectionModel).values(
-            profile_id=params.profile_id,
-            game_run_id=params.game_run_id,
-            projection_version=params.projection_version,
-            evaluator_version=params.evaluator_version,
-            through_history_sequence=params.through_history_sequence,
-            history_start_sequence=params.history_start_sequence,
-            facts=params.facts,
-            skills=params.skills,
+        # Upload holds the per-profile/run head lock. Retain every accepted
+        # revision, including amended observations at unchanged range bounds.
+        last_revision = await self.session.scalar(
+            select(func.max(AnalyticsProjectionModel.revision)).where(
+                AnalyticsProjectionModel.profile_id == params.profile_id,
+                AnalyticsProjectionModel.game_run_id == params.game_run_id,
+            ),
         )
         await self.session.execute(
-            statement.on_conflict_do_update(
-                index_elements=[
-                    AnalyticsProjectionModel.profile_id,
-                    AnalyticsProjectionModel.game_run_id,
-                    AnalyticsProjectionModel.projection_version,
-                    AnalyticsProjectionModel.evaluator_version,
-                    AnalyticsProjectionModel.through_history_sequence,
-                    AnalyticsProjectionModel.history_start_sequence,
-                ],
-                set_={"facts": statement.excluded.facts, "skills": statement.excluded.skills},
-            ),
+            insert(AnalyticsProjectionModel).values(
+                profile_id=params.profile_id,
+                game_run_id=params.game_run_id,
+                projection_version=params.projection_version,
+                evaluator_version=params.evaluator_version,
+                through_history_sequence=params.through_history_sequence,
+                history_start_sequence=params.history_start_sequence,
+                revision=(last_revision or 0) + 1,
+                facts=params.facts,
+                skills=params.skills,
+            )
         )
 
     async def update_head(
@@ -196,3 +197,66 @@ class PostgresAnalyticsStorage(AnalyticsStorage):
         if model is None:
             return None
         return model.to_domain()
+
+    async def get_assessment_projections(
+        self,
+        *,
+        profile_id: UUID,
+        game_run_id: str,
+    ) -> list[AssessmentProjection]:
+        # Keep intermediate ranges: they record replacement of crossing episodes.
+        rows = await self.session.scalars(
+            select(AnalyticsProjectionModel)
+            .where(
+                AnalyticsProjectionModel.profile_id == profile_id,
+                AnalyticsProjectionModel.game_run_id == game_run_id,
+                AnalyticsProjectionModel.projection_version == PROJECTION_VERSION,
+                AnalyticsProjectionModel.evaluator_version == EVALUATOR_VERSION,
+            )
+            .order_by(
+                AnalyticsProjectionModel.through_history_sequence,
+                AnalyticsProjectionModel.revision,
+                AnalyticsProjectionModel.history_start_sequence,
+            ),
+        )
+        return [
+            AssessmentProjection(
+                through_history_sequence=row.through_history_sequence,
+                history_start_sequence=row.history_start_sequence,
+                revision=row.revision,
+                facts=row.facts,
+                skills=row.skills,
+            )
+            for row in rows
+        ]
+
+    async def save_assessment(
+        self,
+        *,
+        profile_id: UUID,
+        assessment: SkillAssessments,
+    ) -> None:
+        statement = insert(SkillAssessmentModel).values(
+            profile_id=profile_id,
+            game_run_id=assessment.game_run_id,
+            policy_version=assessment.skills[0].policy_version,
+            based_on_history_sequence=assessment.based_on_history_sequence,
+            skills=[
+                {"skillId": skill.skill_id, "status": skill.status} for skill in assessment.skills
+            ],
+        )
+        await self.session.execute(
+            statement.on_conflict_do_update(
+                index_elements=[
+                    SkillAssessmentModel.profile_id,
+                    SkillAssessmentModel.game_run_id,
+                    SkillAssessmentModel.policy_version,
+                ],
+                set_={
+                    "based_on_history_sequence": statement.excluded.based_on_history_sequence,
+                    "skills": statement.excluded.skills,
+                },
+                where=SkillAssessmentModel.based_on_history_sequence
+                <= statement.excluded.based_on_history_sequence,
+            )
+        )

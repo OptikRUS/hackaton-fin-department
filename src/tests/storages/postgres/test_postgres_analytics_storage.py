@@ -98,7 +98,7 @@ class TestPostgresAnalyticsStorage(FactoryFixture, PostgresFixture):
 
         assert result == {}
 
-    async def test_projection_replacement_uses_versioned_boundary(self) -> None:
+    async def test_amended_projection_preserves_both_revisions_at_same_boundary(self) -> None:
         profile_id = UUID("b09682a3-1421-488c-a3e1-58b18ac94125")
         await self.storage.insert_projection(
             params=AnalyticsUploadParams(
@@ -128,9 +128,17 @@ class TestPostgresAnalyticsStorage(FactoryFixture, PostgresFixture):
             profile_id=profile_id, game_run_id="run-1"
         )
 
-        assert len(stored) == 1
-        assert stored[0].facts == [{"eventId": "event-2"}]
-        assert stored[0].skills == [{"skillId": "FIN-02"}]
+        assert len(stored) == 2
+        by_revision = {row.revision: row for row in stored}
+        assert by_revision[1].facts == [{"eventId": "event-1"}]
+        assert by_revision[1].skills == [{"skillId": "FIN-01"}]
+        assert by_revision[2].facts == [{"eventId": "event-2"}]
+        assert by_revision[2].skills == [{"skillId": "FIN-02"}]
+        await self.storage.session.execute(
+            delete(AnalyticsProjectionModel).where(
+                AnalyticsProjectionModel.profile_id == profile_id
+            )
+        )
 
     async def test_latest_policy_assessment_is_read_without_inventing_status(self) -> None:
         profile_id = UUID("b09682a3-1421-488c-a3e1-58b18ac94126")
