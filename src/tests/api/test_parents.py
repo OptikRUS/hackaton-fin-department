@@ -1,16 +1,18 @@
-import json
-from pathlib import Path
-
 import pytest
 from httpx2 import codes
 
 from src.tests.fixtures import APIFixture
 
-EXPECTED_MATERIALS: dict[str, dict[str, str | list[str]]] = json.loads(
-    (Path(__file__).parent / "data" / "parent_skill_materials.json").read_text(
-        encoding="utf-8",
-    ),
-)
+EMPTY_MATERIALS = {
+    "materialsAvailable": False,
+    "learningGoal": "",
+    "story": "",
+    "replaceWithParentStory": "",
+    "conversationStarters": [],
+    "parentTakeaway": "",
+    "researchBasis": "",
+    "researchSources": [],
+}
 
 
 class TestGetParentReportAPI(APIFixture):
@@ -37,84 +39,84 @@ class TestGetParentReportAPI(APIFixture):
                     "title": "Сравнивает денежные суммы",
                     "status": "MASTERED",
                     "isMastered": True,
-                    **EXPECTED_MATERIALS["FIN-01"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-02",
                     "title": "Планирует бюджет на период",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EXPECTED_MATERIALS["FIN-02"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-03",
                     "title": "Учитывает обязательные нужды перед желаниями",
                     "status": "PRACTICING",
                     "isMastered": False,
-                    **EXPECTED_MATERIALS["FIN-03"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-04",
                     "title": "Следит, чтобы денег хватало до следующего дохода",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EXPECTED_MATERIALS["FIN-04"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-05",
                     "title": "Последовательно собирает на выбранную цель",
                     "status": "MASTERED",
                     "isMastered": True,
-                    **EXPECTED_MATERIALS["FIN-05"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-06",
                     "title": "Откладывает желанную покупку ради приоритета",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EXPECTED_MATERIALS["FIN-06"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-07",
                     "title": "Создаёт запас на непредвиденные расходы",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EXPECTED_MATERIALS["FIN-07"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-08",
                     "title": "Перестраивает действия после неожиданной траты",
                     "status": "PRACTICING",
                     "isMastered": False,
-                    **EXPECTED_MATERIALS["FIN-08"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-09",
                     "title": "Сопоставляет денежные и другие затраты",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EXPECTED_MATERIALS["FIN-09"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-10",
                     "title": "Планирует дополнительный заработок",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EXPECTED_MATERIALS["FIN-10"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-11",
                     "title": "Разбирает финансовые последствия и меняет решение",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EXPECTED_MATERIALS["FIN-11"],
+                    **EMPTY_MATERIALS,
                 },
                 {
                     "id": "FIN-12",
                     "title": "Понимает свои доходы и расходы",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EXPECTED_MATERIALS["FIN-12"],
+                    **EMPTY_MATERIALS,
                 },
             ],
             "isDemo": True,
@@ -149,7 +151,14 @@ class TestGetParentReportAPI(APIFixture):
             "researchBasis": "string",
             "researchSources": "array",
         }
-        expected_fields = {"id", "title", "status", "isMastered", *material_types}
+        expected_fields = {
+            "id",
+            "title",
+            "status",
+            "isMastered",
+            "materialsAvailable",
+            *material_types,
+        }
         assert set(schema["properties"]) == expected_fields
         assert set(schema["required"]) == expected_fields
         for field, field_type in material_types.items():

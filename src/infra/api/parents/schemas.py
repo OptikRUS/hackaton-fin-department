@@ -1,7 +1,7 @@
 from enum import StrEnum
 
 from src.infra.api.boundary import BoundaryModel
-from src.infra.api.parents.skill_content import SKILL_CONTENT
+from src.infra.api.parents.skill_content import ParentMaterialsResponse
 
 
 class SkillStatus(StrEnum):
@@ -24,6 +24,7 @@ class SkillResponse(BoundaryModel):
     title: str
     status: SkillStatus
     is_mastered: bool | None
+    materials_available: bool
     learning_goal: str
     story: str
     replace_with_parent_story: str
@@ -55,10 +56,11 @@ DEMO_SKILLS: tuple[tuple[str, str, SkillStatus], ...] = (
 )
 
 
-def demo_skills() -> list[SkillResponse]:
+def demo_skills(materials: ParentMaterialsResponse) -> list[SkillResponse]:
+    content_by_id = {skill.skill_id: skill for skill in materials.skills}
     skills: list[SkillResponse] = []
     for skill_id, title, status in DEMO_SKILLS:
-        content = SKILL_CONTENT[skill_id]
+        content = content_by_id.get(skill_id)
         skills.append(
             SkillResponse(
                 id=skill_id,
@@ -67,13 +69,14 @@ def demo_skills() -> list[SkillResponse]:
                 is_mastered=(
                     None if status == SkillStatus.NO_DATA else status == SkillStatus.MASTERED
                 ),
-                learning_goal=content.learning_goal,
-                story=content.story,
-                replace_with_parent_story=content.replace_with_parent_story,
-                conversation_starters=list(content.conversation_starters),
-                parent_takeaway=content.parent_takeaway,
-                research_basis=content.research_basis,
-                research_sources=list(content.research_sources),
+                materials_available=content is not None,
+                learning_goal=content.learning_goal if content else "",
+                story=content.story if content else "",
+                replace_with_parent_story=content.replace_with_parent_story if content else "",
+                conversation_starters=list(content.conversation_starters) if content else [],
+                parent_takeaway=content.parent_takeaway if content else "",
+                research_basis=content.research_basis if content else "",
+                research_sources=list(content.research_sources) if content else [],
             ),
         )
     return skills
