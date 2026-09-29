@@ -51,7 +51,29 @@ def published_catalogue() -> dict[str, Any]:
 
 
 class TestParentMaterialsAPI(APIFixture):
-    async def test_catalogue_is_unpublished_without_profile_or_skill_assessment(self) -> None:
+    async def test_catalogue_is_published_without_profile_or_skill_assessment(self) -> None:
+        expected_materials = json.loads(
+            await to_thread(
+                (Path(__file__).parent / "data" / "parent_skill_materials.json").read_text,
+                encoding="utf-8",
+            ),
+        )
+        response = await self.api.client.get("/v1/parent-materials")
+        assert response.status_code == 200
+        assert response.json() == {
+            "schemaVersion": 1,
+            "contentVersion": "2026-09-29-v1",
+            "publicationStatus": "PUBLISHED",
+            "skills": [
+                {"skillId": skill_id, **materials}
+                for skill_id, materials in expected_materials.items()
+            ],
+        }
+
+    async def test_catalogue_is_unpublished_without_profile_or_skill_assessment(
+        self, catalogue_path: Path
+    ) -> None:
+        await to_thread(catalogue_path.write_text, json.dumps(UNPUBLISHED), encoding="utf-8")
         response = await self.api.client.get("/v1/parent-materials")
         assert response.status_code == 200
         assert response.json() == UNPUBLISHED
