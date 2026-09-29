@@ -2,7 +2,7 @@ import json
 import math
 import re
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 from weakref import WeakKeyDictionary
 
@@ -73,7 +73,7 @@ def _as_float(value: object) -> float:
     return _as_number(value) or 0.0
 
 
-def _publish_labeled(gauge: Gauge, labelname: str, counts: Counter[str]) -> None:
+def _publish_labeled(gauge: Gauge, labelname: str, counts: Mapping[str, float]) -> None:
     gauge.clear()
     for label, count in counts.items():
         gauge.labels(**{labelname: label}).set(count)
@@ -137,6 +137,7 @@ class WorldSample:
         "balance",
         "completed_minigames",
         "engine_day",
+        "facts",
         "goals",
         "look",
         "owned_items",
@@ -167,6 +168,7 @@ class WorldSample:
         completed_minigames: float,
         owned_items: float,
         goals: tuple[str, ...],
+        facts: tuple[dict[str, Any], ...],
     ) -> None:
         self.act = act
         self.age = age
@@ -183,6 +185,7 @@ class WorldSample:
         self.completed_minigames = completed_minigames
         self.owned_items = owned_items
         self.goals = goals
+        self.facts = facts
 
 
 _ACT_SUFFIX = re.compile(r"act-(\d+):day")
@@ -220,6 +223,14 @@ def parse_world_sample(snapshot_json: str) -> WorldSample | None:
         for goal in state.get("completedGoalProjects", [])
         if isinstance(goal, dict) and goal.get("goalId") is not None
     )
+    history = document.get("history")
+    facts = tuple(
+        fact
+        for entry in (history if isinstance(history, list) else [])
+        if isinstance(entry, dict)
+        for fact in entry.get("facts", [])
+        if isinstance(fact, dict)
+    )
     return WorldSample(
         act=_story_act(_as_optional_str(story.get("currentDayId"))),
         age=_as_label(pet.get("age")),
@@ -236,7 +247,77 @@ def parse_world_sample(snapshot_json: str) -> WorldSample | None:
         completed_minigames=_as_float(len(state.get("completedMiniGames", []))),
         owned_items=_as_float(len(state.get("ownedItems", []))),
         goals=goals,
+        facts=facts,
     )
+
+
+class StoredCounts:
+    """Per-cycle accumulator of stored analytics facts for the aggregation task."""
+
+    def __init__(self) -> None:
+        self.fact_types: Counter[str] = Counter()
+        self.interactions: Counter[str] = Counter()
+        self.purchases: Counter[str] = Counter()
+        self.purchase_amounts: dict[str, float] = {}
+        self.desires: Counter[str] = Counter()
+        self.savings: Counter[str] = Counter()
+        self.saving_amounts: dict[str, float] = {}
+        self.budget_amounts: dict[str, float] = {}
+        self.practice: Counter[str] = Counter()
+        self.reserve: Counter[str] = Counter()
+        self.earning_amount = 0.0
+        self.unexpected_expense_amount = 0.0
+
+    def add_fact(self, fact: dict[str, Any]) -> None:
+        detail = fact.get("detail")
+        if not isinstance(detail, dict):
+            return
+        detail_type = detail.get("_type")
+        if not isinstance(detail_type, str):
+            return
+        self.fact_types[detail_type] += 1
+        self._add_detail(detail_type, detail)
+
+    def _add_detail(self, detail_type: str, detail: dict[str, Any]) -> None:
+        if detail_type == "interaction":
+            self._add_interaction(detail)
+        elif detail_type in ("optional_purchase", "desire_deferred", "saving_movement"):
+            self._add_money_choice(detail_type, detail)
+        elif detail_type == "budget_confirmed":
+            for bucket in _PLAN_BUCKETS:
+                self._amount(self.budget_amounts, bucket, detail.get(bucket))
+        elif detail_type == "reserve_decision":
+            self.reserve[str(bool(detail.get("usedForUnexpectedExpense")))] += 1
+        elif detail_type == "unexpected_expense":
+            self.unexpected_expense_amount += _as_float(detail.get("amount"))
+        elif detail_type == "earning_completed":
+            self.earning_amount += _as_float(detail.get("actualReward"))
+        elif detail_type == "practice_answer":
+            correct = detail.get("selectedAnswerId") == detail.get("expectedAnswerId")
+            self.practice[str(correct)] += 1
+
+    def _add_interaction(self, detail: dict[str, Any]) -> None:
+        name = detail.get("name")
+        if isinstance(name, str):
+            self.interactions[name] += 1
+
+    def _add_money_choice(self, detail_type: str, detail: dict[str, Any]) -> None:
+        if detail_type == "optional_purchase":
+            purchased = str(bool(detail.get("purchased")))
+            self.purchases[purchased] += 1
+            self._amount(self.purchase_amounts, purchased, detail.get("price"))
+        elif detail_type == "desire_deferred":
+            self.desires[str(bool(detail.get("desireDeclared")))] += 1
+        else:
+            kind = str(detail.get("kind", "unknown"))
+            self.savings[kind] += 1
+            self._amount(self.saving_amounts, kind, detail.get("amount"))
+
+    @staticmethod
+    def _amount(target: dict[str, float], label: str, value: object) -> None:
+        amount = _as_number(value)
+        if amount is not None:
+            target[label] = target.get(label, 0.0) + amount
 
 
 class BusinessMetrics(MetricsSink):
@@ -249,6 +330,7 @@ class BusinessMetrics(MetricsSink):
         self._build_profile_counters()
         self._build_world_gauges()
         self._build_world_distributions()
+        self._build_stored_gauges()
 
     def _counter(
         self, name: str, documentation: str, labelnames: Sequence[str] = ()
@@ -603,6 +685,81 @@ class BusinessMetrics(MetricsSink):
             self._completed_minigames,
             self._owned_items,
         )
+
+    def _build_stored_gauges(self) -> None:
+        self._facts_stored = self._gauge(
+            "fin_facts_stored",
+            "Stored analytics facts by detail type across all worlds and projections",
+            ("detail_type",),
+        )
+        self._interactions_stored = self._gauge(
+            "fin_interactions_stored",
+            "Stored interaction facts by engine command name",
+            ("name",),
+        )
+        self._purchases_stored = self._gauge(
+            "fin_purchases_stored",
+            "Stored optional purchases by outcome",
+            ("purchased",),
+        )
+        self._purchase_amounts_stored = self._gauge(
+            "fin_purchase_amount_stored",
+            "Stored optional purchase price sum by outcome",
+            ("purchased",),
+        )
+        self._desires_stored = self._gauge(
+            "fin_desires_stored",
+            "Stored deferred desires by declaration",
+            ("declared",),
+        )
+        self._savings_stored = self._gauge(
+            "fin_saving_movements_stored",
+            "Stored saving movements by operation kind",
+            ("kind",),
+        )
+        self._saving_amounts_stored = self._gauge(
+            "fin_saving_amount_stored",
+            "Stored saving movement amount sum by operation kind",
+            ("kind",),
+        )
+        self._budget_amounts_stored = self._gauge(
+            "fin_budget_amount_stored",
+            "Stored confirmed budget allocation sum by plan bucket",
+            ("bucket",),
+        )
+        self._practice_stored = self._gauge(
+            "fin_practice_stored",
+            "Stored practice answers by correctness",
+            ("correct",),
+        )
+        self._reserve_stored = self._gauge(
+            "fin_reserve_stored",
+            "Stored reserve decisions by unexpected expense usage",
+            ("used",),
+        )
+        self._earning_amount_stored = self._gauge(
+            "fin_earning_amount_stored",
+            "Stored completed earning reward sum",
+        )
+        self._unexpected_expense_amount_stored = self._gauge(
+            "fin_unexpected_expense_amount_stored",
+            "Stored unexpected expense amount sum",
+        )
+
+    def publish_stored(self, counts: StoredCounts) -> None:
+        """Republish accumulated stored-fact aggregates; values are absolute per cycle."""
+        _publish_labeled(self._facts_stored, "detail_type", counts.fact_types)
+        _publish_labeled(self._interactions_stored, "name", counts.interactions)
+        _publish_labeled(self._purchases_stored, "purchased", counts.purchases)
+        _publish_labeled(self._purchase_amounts_stored, "purchased", counts.purchase_amounts)
+        _publish_labeled(self._desires_stored, "declared", counts.desires)
+        _publish_labeled(self._savings_stored, "kind", counts.savings)
+        _publish_labeled(self._saving_amounts_stored, "kind", counts.saving_amounts)
+        _publish_labeled(self._budget_amounts_stored, "bucket", counts.budget_amounts)
+        _publish_labeled(self._practice_stored, "correct", counts.practice)
+        _publish_labeled(self._reserve_stored, "used", counts.reserve)
+        self._earning_amount_stored.set(counts.earning_amount)
+        self._unexpected_expense_amount_stored.set(counts.unexpected_expense_amount)
 
     def _observe_sample(self, sample: WorldSample) -> None:
         self._balance.observe(sample.balance)

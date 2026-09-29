@@ -41,5 +41,63 @@ def world_snapshot_document(**overrides: Any) -> dict[str, Any]:  # noqa: ANN401
     return document
 
 
+def legacy_fact(event_id: str, detail: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "eventId": event_id,
+        "gameRunId": WORLD_RUN_ID,
+        "episodeId": "episode-1",
+        "actionId": f"action-{event_id}",
+        "sequence": 1,
+        "detail": detail,
+        "actor": "CHILD",
+        "mode": "REAL",
+    }
+
+
 def world_snapshot_json(**overrides: Any) -> str:  # noqa: ANN401
     return json.dumps(world_snapshot_document(**overrides))
+
+
+def legacy_archive_json(**overrides: Any) -> str:  # noqa: ANN401
+    """Full v5 archive with a history entry carrying facts — the pre-CURRENT_WORLD lane."""
+    document = world_snapshot_document(**overrides)
+    document.pop("worldFormatVersion")
+    document["formatVersion"] = 5
+    document["history"] = overrides.pop(
+        "history",
+        [
+            {
+                "id": "entry-1",
+                "sequence": 1,
+                "runId": document["runId"],
+                "type": "COMMAND",
+                "facts": [
+                    legacy_fact("e1", {"_type": "interaction", "name": "RenamePet"}),
+                    legacy_fact(
+                        "e2",
+                        {
+                            "_type": "optional_purchase",
+                            "itemId": "ball",
+                            "price": 50,
+                            "purchased": True,
+                        },
+                    ),
+                    legacy_fact(
+                        "e3",
+                        {
+                            "_type": "budget_confirmed",
+                            "planId": "p1",
+                            "planVersion": 1,
+                            "allocationBase": 800,
+                            "needs": 500,
+                            "wants": 100,
+                            "savings": 150,
+                            "reserve": 50,
+                            "cause": "WEEKLY",
+                        },
+                    ),
+                ],
+            }
+        ],
+    )
+    return json.dumps(document)
