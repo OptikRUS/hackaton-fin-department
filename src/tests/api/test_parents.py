@@ -5,10 +5,13 @@ from pathlib import Path
 import pytest
 from httpx2 import codes
 
-from src.tests.fixtures import APIFixture
+from src.core.parents.exceptions import ParentReportNotFoundError
+from src.core.parents.schemas import ParentPet, ParentReport, ParentSkillStatus
+from src.core.parents.use_cases import GetParentReportUseCase
+from src.tests.fixtures import APIFixture, ContainerFixture
 
 
-class TestGetParentReportAPI(APIFixture):
+class TestGetParentReportAPI(APIFixture, ContainerFixture):
     @pytest.fixture(autouse=True)
     async def setup(self) -> None:
         self.pet_id = "12345678123456781234567812345678"
@@ -18,19 +21,41 @@ class TestGetParentReportAPI(APIFixture):
                 encoding="utf-8",
             ),
         )
+        self.use_case = await self.container_helper.override_use_case(
+            use_case_type=GetParentReportUseCase,
+        )
+        self.use_case.execute.return_value = ParentReport(
+            pet=ParentPet(
+                id=self.pet_id,
+                name="Лис",
+                temper=None,
+                balance=None,
+                selected_look_id="PLAIN",
+                visual_state=None,
+            ),
+            skill_statuses=tuple(
+                ParentSkillStatus(
+                    skill_id=f"FIN-{number:02d}",
+                    status=(
+                        "MASTERED" if number == 1 else "HAS_PROBLEM" if number == 11 else "NO_DATA"
+                    ),
+                )
+                for number in range(1, 13)
+            ),
+        )
 
-    async def test_returns_pet_and_twelve_demo_skills(self) -> None:
+    async def test_returns_real_pet_and_twelve_saved_skills(self) -> None:
         response = await self.api.get_parent_report(pet_id=self.pet_id)
 
         assert response.status_code == codes.OK
         assert response.json() == {
             "pet": {
                 "id": self.pet_id,
-                "name": "Рыжик",
-                "temper": "playful",
-                "balance": 100,
-                "selectedLookId": "BACKPACK",
-                "visualState": "NORMAL",
+                "name": "Лис",
+                "temper": None,
+                "balance": None,
+                "selectedLookId": "PLAIN",
+                "visualState": None,
             },
             "skills": [
                 {
@@ -52,8 +77,8 @@ class TestGetParentReportAPI(APIFixture):
                 {
                     "id": "FIN-03",
                     "title": "Учитывает обязательные нужды перед желаниями",
-                    "status": "PRACTICING",
-                    "isMastered": False,
+                    "status": "NO_DATA",
+                    "isMastered": None,
                     "materialsAvailable": True,
                     **self.skill_materials["FIN-03"],
                 },
@@ -68,8 +93,8 @@ class TestGetParentReportAPI(APIFixture):
                 {
                     "id": "FIN-05",
                     "title": "Последовательно собирает на выбранную цель",
-                    "status": "MASTERED",
-                    "isMastered": True,
+                    "status": "NO_DATA",
+                    "isMastered": None,
                     "materialsAvailable": True,
                     **self.skill_materials["FIN-05"],
                 },
@@ -92,8 +117,8 @@ class TestGetParentReportAPI(APIFixture):
                 {
                     "id": "FIN-08",
                     "title": "Перестраивает действия после неожиданной траты",
-                    "status": "PRACTICING",
-                    "isMastered": False,
+                    "status": "NO_DATA",
+                    "isMastered": None,
                     "materialsAvailable": True,
                     **self.skill_materials["FIN-08"],
                 },
@@ -116,8 +141,8 @@ class TestGetParentReportAPI(APIFixture):
                 {
                     "id": "FIN-11",
                     "title": "Разбирает финансовые последствия и меняет решение",
-                    "status": "NO_DATA",
-                    "isMastered": None,
+                    "status": "HAS_PROBLEM",
+                    "isMastered": False,
                     "materialsAvailable": True,
                     **self.skill_materials["FIN-11"],
                 },
@@ -130,23 +155,25 @@ class TestGetParentReportAPI(APIFixture):
                     **self.skill_materials["FIN-12"],
                 },
             ],
-            "isDemo": True,
+            "isDemo": False,
         }
+        self.use_case.execute.assert_awaited_once_with(device_id=self.pet_id)
 
-    async def test_returns_demo_for_another_valid_pet_id(self) -> None:
+    async def test_unknown_device_id_returns_not_found(self) -> None:
+        self.use_case.execute.side_effect = ParentReportNotFoundError
         response = await self.api.get_parent_report(
             pet_id="87654321876543218765432187654321",
         )
 
-        assert response.status_code == codes.OK
-        assert response.json()["pet"]["id"] == "87654321876543218765432187654321"
-        assert response.json()["isDemo"] is True
+        assert response.status_code == codes.NOT_FOUND
+        assert response.json() == {"code": "PARENT_REPORT_NOT_FOUND"}
+        self.use_case.execute.assert_awaited_once_with(device_id="87654321876543218765432187654321")
 
     async def test_accepts_saved_device_id(self) -> None:
         response = await self.api.get_parent_report(pet_id="9f1c2d3e4a5b6078")
 
         assert response.status_code == codes.OK
-        assert response.json()["pet"]["id"] == "9f1c2d3e4a5b6078"
+        self.use_case.execute.assert_awaited_once_with(device_id="9f1c2d3e4a5b6078")
 
     async def test_openapi_requires_camel_case_material_fields(self) -> None:
         response = await self.api.client.get(url="/openapi.json")

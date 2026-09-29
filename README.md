@@ -94,16 +94,22 @@ curl -X POST http://127.0.0.1:8080/api/pets \
 даёт `409 IDEMPOTENCY_CONFLICT`; попытка изменить уже зарегистрированного
 питомца — `409 PROFILE_CONFLICT`. Идентификатор устройства — непустая строка.
 
-## Родительский отчёт (заглушка)
+## Родительский отчёт
 
-`GET /api/parents/{petId}` принимает строковый идентификатор и возвращает фиксированный
-демонстрационный отчёт. Сейчас эндпоинт не читает питомца из базы и не оценивает
-действия ребёнка. `pet.id` повторяет переданный идентификатор; остальные поля питомца и
-статусы навыков пока заданы в коде.
+`GET /api/parents/{petId}` принимает зарегистрированный `deviceId` как `petId`.
+Неизвестный идентификатор возвращает `404 {"code":"PARENT_REPORT_NOT_FOUND"}`.
+Данные питомца берутся из последнего принятого snapshot, а до первого snapshot —
+из регистрации. Тогда `balance` и `visualState` равны `null`; `temper` тоже может
+быть `null`. Баланс архива — сумма `availableBalance` и `savingsBalance`.
+
+Статусы навыков берутся из сохранённой серверной оценки для `gameRunId`
+последнего snapshot. Пока её нет, все 12 статусов равны `NO_DATA`. Аналитика нового
+прохождения не меняет отчёт до принятия его snapshot. `isDemo` всегда `false`.
 
 Каждый из 12 навыков FIN-01…FIN-12 получает опубликованные материалы для разговора
 родителя с ребёнком: `materialsAvailable=true`, а поля заполняются из общего каталога
-версии `2026-09-29-v1` независимо от статуса навыка (`MASTERED`, `PRACTICING`, `NO_DATA`).
+версии `2026-09-29-v1` независимо от статуса навыка (`MASTERED`, `PRACTICING`,
+`NO_DATA`, `HAS_PROBLEM`).
 Если каталог не опубликован, `materialsAvailable=false`, строки и массивы пусты.
 Все поля обязательны и возвращаются в camelCase:
 
@@ -124,11 +130,11 @@ curl -X POST http://127.0.0.1:8080/api/pets \
 ```json
 {
   "pet": {
-    "id": "12345678123456781234567812345678",
+    "id": "9f1c2d3e4a5b6078",
     "name": "Рыжик",
-    "temper": "playful",
+    "temper": null,
     "balance": 100,
-    "selectedLookId": "BACKPACK",
+    "selectedLookId": "PLAIN",
     "visualState": "NORMAL"
   },
   "skills": [
@@ -156,7 +162,7 @@ curl -X POST http://127.0.0.1:8080/api/pets \
       ]
     }
   ],
-  "isDemo": true
+  "isDemo": false
 }
 ```
 
@@ -229,10 +235,11 @@ FIN-01…FIN-12, идентификатор `skillId`, все перечисле
 запрос с тем же ID получает `409 IDEMPOTENCY_CONFLICT`. Клиент передаёт
 `expectedServerRevision=null` для первой записи, затем последнюю полученную
 ревизию. Устаревшая ревизия даёт `409 SNAPSHOT_REVISION_CONFLICT`. Текущий игровой
-клиент передаёт `payloadKind="CURRENT_WORLD"`, внутренний `worldFormatVersion=1`
-и компактные `predecessors` для перехода к новому прохождению. Полный журнал
-для этого формата не нужен. Legacy format 5 продолжает проверяться через
-`archivedRuns` и цепочку `nextRunId`. Произвольная замена прохождения даёт
+клиент передаёт полный архив `formatVersion=5` без `payloadKind`; переход к новому
+прохождению проверяется через `archivedRuns` и цепочку `nextRunId`. Backend также
+поддерживает компактный мир с `payloadKind="CURRENT_WORLD"`, внутренним
+`worldFormatVersion=1` и `predecessors`; полный журнал для него не нужен.
+Произвольная замена прохождения даёт
 `409 GAME_RUN_CONFLICT`. Если архива нет, скачивание возвращает
 `404 SNAPSHOT_NOT_FOUND`.
 

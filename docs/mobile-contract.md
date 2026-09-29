@@ -13,12 +13,15 @@
 изменённое тело конфликтует. UUID внутри PostgreSQL — деталь хранения, ответы
 с `profileId` в журнале подарков возвращают исходный `deviceId`.
 
-## Текущий мир
+## Архив мира
 
 `PUT /v1/profiles/snapshot` принимает два формата:
 
-- Старый полный архив: `payloadKind` отсутствует, внутренний `formatVersion=1..5`.
-- Текущий мир: `payloadKind="CURRENT_WORLD"`, `snapshotFormatVersion=1`,
+- Текущий Android отправляет полный архив: `payloadKind` отсутствует,
+  `snapshotFormatVersion=5`, внутри `snapshotJson` находится `formatVersion=5`
+  с полным `history`. Backend также принимает архивы версий 1…4.
+- Дополнительно backend принимает компактный текущий мир:
+  `payloadKind="CURRENT_WORLD"`, `snapshotFormatVersion=1`,
   внутри `snapshotJson` находится `worldFormatVersion=1`.
 
 Строка `snapshotJson` хранится и возвращается без пересборки, включая int64,
@@ -36,7 +39,7 @@ Unicode и порядок полей. Сервер проверяет форму
 | `predecessors` | Компактные `{runId,generation,historySequence}` прежних прохождений |
 | `checksum` | Контрольная сумма по каноническим правилам клиента |
 
-Полный `history` и старые `archivedRuns` в новом формате не требуются.
+Полный `history` и старые `archivedRuns` в компактном формате не требуются.
 `POST /v1/profiles/snapshot/download` возвращает прежнюю строку и
 `payloadKind="CURRENT_WORLD"` для текущего мира; для legacy сохраняется прежняя
 форма ответа. `expectedServerRevision=null` допустим только для первого upload.
@@ -47,12 +50,13 @@ Unicode и порядок полей. Сервер проверяет форму
 после восстановления до офлайн-перезапуска; само это не означает подмену мира.
 Полные старые архивы сохраняют свою прежнюю проверку продолжения.
 
-Реальный пример игры: `src/tests/data/android-current-world-upload.json`.
-Источник примера: LCTApp `docs/backend/examples/snapshot-upload.json`,
-Android commit `50a7637df9619bd824b45e92ce725ec0fef55402`.
+Пример текущего Android: `src/tests/data/android-legacy-snapshot-upload.json`,
+скопированный из LCTApp `docs/backend/examples/snapshot-upload.json`.
+`android-current-world-upload.json` остаётся примером дополнительного компактного
+формата backend.
 Примеры `android-register-profile.json` и `android-analytics-upload.json` в той же
 папке скопированы из одноимённых wire examples (`register-profile.json`,
-`analytics-upload.json`) этого commit.
+`analytics-upload.json`) Android.
 
 ## Аналитика отдельно от backup
 
@@ -65,8 +69,9 @@ Android commit `50a7637df9619bd824b45e92ce725ec0fef55402`.
 не итоговые статусы освоения. Сервер продолжает проверять форму, версии,
 ссылки на факты, счётчики, неизменность исходных событий и повторы.
 
-`historyStartSequence` по умолчанию равен 0 и отсутствует в старых запросах.
-После world restore он задаёт отсутствующий префикс. Например, `(900,901]`
+Текущий Android не передаёт `historyStartSequence`; backend использует значение 0.
+Для компактного мира после restore backend также поддерживает частичный диапазон:
+`historyStartSequence` задаёт отсутствующий префикс. Например, `(900,901]`
 содержит факты нового действия 901, но не требует переслать первые 900 записей.
 Для старого полного диапазона с началом 0 сохраняется допустимость sequence 0.
 
@@ -92,7 +97,9 @@ Backend рассчитывает `MASTERED`, `PRACTICING`, `NO_DATA`, `HAS_PROBL
 Запрос оценок также обрабатывает ранее принятые проекции без новой загрузки.
 При отсутствии аналитики и готовой записи сохраняется `409 ASSESSMENT_NOT_READY`;
 принятая пустая аналитика даёт все 12 статусов `NO_DATA`.
-Демонстрационный `GET /api/parents/{petId}` не используется встроенным режимом.
+`GET /api/parents/{petId}` использует `petId=deviceId` и показывает серверные
+оценки для run последнего принятого snapshot. Встроенный режим Android продолжает
+получать оценки через `skills/query`.
 
 ## Родительские материалы
 
@@ -119,7 +126,9 @@ HTTPS-ссылок `researchSources`. Метаданные и тексты не 
 и аналитика от наличия материалов не зависят. Загрузка происходит при запросе;
 исправленный файл доступен без перезапуска приложения.
 
-Legacy-отчёт `/api/parents/{petId}` сохраняет демонстрационные питомца и статусы.
+Отчёт `/api/parents/{petId}` возвращает зарегистрированного питомца и сохранённые
+статусы текущего run. До snapshot `balance` и `visualState` равны `null`; до оценки
+все навыки имеют `NO_DATA`. Неизвестный `deviceId` возвращает 404.
 Каждый из 12 навыков содержит `materialsAvailable=true` и семь полей материалов
 в camelCase из того же каталога независимо от статуса освоения. При отсутствии
 публикации `materialsAvailable=false`, строковые поля материалов пусты, списки пусты.

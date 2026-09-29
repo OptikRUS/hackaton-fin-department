@@ -35,6 +35,7 @@ from src.infra.storages.postgres.rewards_storage import PostgresRewardStorage
 from src.infra.storages.postgres.snapshot_storage import PostgresSnapshotStorage
 from src.tests.di.providers.analytics import MockAnalyticsUseCaseProvider
 from src.tests.di.providers.general import MockGeneralProvider
+from src.tests.di.providers.parents import MockParentsUseCaseProvider
 from src.tests.di.providers.pets import MockPetsUseCaseProvider
 from src.tests.di.providers.profiles import MockProfilesUseCaseProvider
 from src.tests.di.providers.rewards import MockRewardsUseCaseProvider
@@ -115,6 +116,7 @@ async def container() -> AsyncGenerator[AsyncContainer]:
         MockAnalyticsUseCaseProvider(),
         MockRewardsUseCaseProvider(),
         MockGeneralProvider(),
+        MockParentsUseCaseProvider(),
     )
     yield container
     await container.close()
