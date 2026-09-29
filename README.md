@@ -1,6 +1,6 @@
 # Repository Coverage
 
-
+[Full report](https://htmlpreview.github.io/?https://github.com/OptikRUS/hackaton-fin-department/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
 | Name                                                                    |    Stmts |     Miss |   Cover |   Missing |
 |------------------------------------------------------------------------ | -------: | -------: | ------: | --------: |
@@ -19,6 +19,10 @@
 | src/core/analytics/use\_cases.py                                        |       70 |        6 |     91% |48-49, 100-106 |
 | src/core/exceptions.py                                                  |        5 |        0 |    100% |           |
 | src/core/metrics.py                                                     |       18 |        0 |    100% |           |
+| src/core/parents/\_\_init\_\_.py                                        |        0 |        0 |    100% |           |
+| src/core/parents/exceptions.py                                          |        3 |        0 |    100% |           |
+| src/core/parents/schemas.py                                             |        7 |        0 |    100% |           |
+| src/core/parents/use\_cases.py                                          |       44 |        0 |    100% |           |
 | src/core/pets/\_\_init\_\_.py                                           |        0 |        0 |    100% |           |
 | src/core/pets/schemas.py                                                |        7 |        0 |    100% |           |
 | src/core/pets/storages.py                                               |        5 |        0 |    100% |           |
@@ -40,10 +44,11 @@
 | src/core/snapshots/use\_cases.py                                        |       46 |        1 |     98% |        55 |
 | src/core/use\_case.py                                                   |        5 |        0 |    100% |           |
 | src/di/\_\_init\_\_.py                                                  |        0 |        0 |    100% |           |
-| src/di/container.py                                                     |       11 |        0 |    100% |           |
+| src/di/container.py                                                     |       12 |        0 |    100% |           |
 | src/di/providers/\_\_init\_\_.py                                        |        0 |        0 |    100% |           |
 | src/di/providers/analytics.py                                           |       11 |        0 |    100% |           |
 | src/di/providers/general.py                                             |       14 |        2 |     86% |    12, 16 |
+| src/di/providers/parents.py                                             |        9 |        0 |    100% |           |
 | src/di/providers/pets.py                                                |        8 |        1 |     88% |        15 |
 | src/di/providers/postgres.py                                            |       39 |        4 |     90% | 26-28, 32 |
 | src/di/providers/profiles.py                                            |        8 |        0 |    100% |           |
@@ -58,10 +63,10 @@
 | src/infra/api/boundary.py                                               |       17 |        0 |    100% |           |
 | src/infra/api/common/\_\_init\_\_.py                                    |        0 |        0 |    100% |           |
 | src/infra/api/common/endpoints.py                                       |        5 |        0 |    100% |           |
-| src/infra/api/exceptions.py                                             |       26 |        1 |     96% |        53 |
+| src/infra/api/exceptions.py                                             |       27 |        1 |     96% |        54 |
 | src/infra/api/parents/\_\_init\_\_.py                                   |        0 |        0 |    100% |           |
-| src/infra/api/parents/endpoints.py                                      |       12 |        0 |    100% |           |
-| src/infra/api/parents/schemas.py                                        |       18 |        0 |    100% |           |
+| src/infra/api/parents/endpoints.py                                      |       16 |        0 |    100% |           |
+| src/infra/api/parents/schemas.py                                        |       24 |        0 |    100% |           |
 | src/infra/api/parents/skill\_content.py                                 |       50 |        0 |    100% |           |
 | src/infra/api/pets/\_\_init\_\_.py                                      |        0 |        0 |    100% |           |
 | src/infra/api/pets/endpoints.py                                         |       10 |        0 |    100% |           |
@@ -102,7 +107,7 @@
 | src/infra/storages/postgres/profile\_storage.py                         |       23 |        0 |    100% |           |
 | src/infra/storages/postgres/rewards\_storage.py                         |       46 |        1 |     98% |        84 |
 | src/infra/storages/postgres/snapshot\_storage.py                        |       27 |        0 |    100% |           |
-| **TOTAL**                                                               | **2643** |  **155** | **94%** |           |
+| **TOTAL**                                                               | **2718** |  **155** | **94%** |           |
 
 
 ## Setup coverage badge
@@ -111,11 +116,22 @@ Below are examples of the badges you can use in your main branch `README` file.
 
 ### Direct image
 
-[![Coverage badge](https://github.com/OptikRUS/hackaton-fin-department/raw/python-coverage-comment-action-data/badge.svg)](https://github.com/OptikRUS/hackaton-fin-department/tree/python-coverage-comment-action-data)
+[![Coverage badge](https://raw.githubusercontent.com/OptikRUS/hackaton-fin-department/python-coverage-comment-action-data/badge.svg)](https://htmlpreview.github.io/?https://github.com/OptikRUS/hackaton-fin-department/blob/python-coverage-comment-action-data/htmlcov/index.html)
 
 This is the one to use if your repository is private or if you don't want to customize anything.
 
+### [Shields.io](https://shields.io) Json Endpoint
 
+[![Coverage badge](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/OptikRUS/hackaton-fin-department/python-coverage-comment-action-data/endpoint.json)](https://htmlpreview.github.io/?https://github.com/OptikRUS/hackaton-fin-department/blob/python-coverage-comment-action-data/htmlcov/index.html)
+
+Using this one will allow you to [customize](https://shields.io/endpoint) the look of your badge.
+It won't work with private repositories. It won't be refreshed more than once per five minutes.
+
+### [Shields.io](https://shields.io) Dynamic Badge
+
+[![Coverage badge](https://img.shields.io/badge/dynamic/json?color=brightgreen&label=coverage&query=%24.message&url=https%3A%2F%2Fraw.githubusercontent.com%2FOptikRUS%2Fhackaton-fin-department%2Fpython-coverage-comment-action-data%2Fendpoint.json)](https://htmlpreview.github.io/?https://github.com/OptikRUS/hackaton-fin-department/blob/python-coverage-comment-action-data/htmlcov/index.html)
+
+This one will always be the same color. It won't work for private repos. I'm not even sure why we included it.
 
 ## What is that?
 
