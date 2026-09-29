@@ -1,24 +1,23 @@
+import json
+from asyncio import to_thread
+from pathlib import Path
+
 import pytest
 from httpx2 import codes
 
 from src.tests.fixtures import APIFixture
-
-EMPTY_MATERIALS = {
-    "materialsAvailable": False,
-    "learningGoal": "",
-    "story": "",
-    "replaceWithParentStory": "",
-    "conversationStarters": [],
-    "parentTakeaway": "",
-    "researchBasis": "",
-    "researchSources": [],
-}
 
 
 class TestGetParentReportAPI(APIFixture):
     @pytest.fixture(autouse=True)
     async def setup(self) -> None:
         self.pet_id = "12345678123456781234567812345678"
+        self.skill_materials = json.loads(
+            await to_thread(
+                (Path(__file__).parent / "data" / "parent_skill_materials.json").read_text,
+                encoding="utf-8",
+            ),
+        )
 
     async def test_returns_pet_and_twelve_demo_skills(self) -> None:
         response = await self.api.get_parent_report(pet_id=self.pet_id)
@@ -39,84 +38,96 @@ class TestGetParentReportAPI(APIFixture):
                     "title": "Сравнивает денежные суммы",
                     "status": "MASTERED",
                     "isMastered": True,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-01"],
                 },
                 {
                     "id": "FIN-02",
                     "title": "Планирует бюджет на период",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-02"],
                 },
                 {
                     "id": "FIN-03",
                     "title": "Учитывает обязательные нужды перед желаниями",
                     "status": "PRACTICING",
                     "isMastered": False,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-03"],
                 },
                 {
                     "id": "FIN-04",
                     "title": "Следит, чтобы денег хватало до следующего дохода",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-04"],
                 },
                 {
                     "id": "FIN-05",
                     "title": "Последовательно собирает на выбранную цель",
                     "status": "MASTERED",
                     "isMastered": True,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-05"],
                 },
                 {
                     "id": "FIN-06",
                     "title": "Откладывает желанную покупку ради приоритета",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-06"],
                 },
                 {
                     "id": "FIN-07",
                     "title": "Создаёт запас на непредвиденные расходы",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-07"],
                 },
                 {
                     "id": "FIN-08",
                     "title": "Перестраивает действия после неожиданной траты",
                     "status": "PRACTICING",
                     "isMastered": False,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-08"],
                 },
                 {
                     "id": "FIN-09",
                     "title": "Сопоставляет денежные и другие затраты",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-09"],
                 },
                 {
                     "id": "FIN-10",
                     "title": "Планирует дополнительный заработок",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-10"],
                 },
                 {
                     "id": "FIN-11",
                     "title": "Разбирает финансовые последствия и меняет решение",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-11"],
                 },
                 {
                     "id": "FIN-12",
                     "title": "Понимает свои доходы и расходы",
                     "status": "NO_DATA",
                     "isMastered": None,
-                    **EMPTY_MATERIALS,
+                    "materialsAvailable": True,
+                    **self.skill_materials["FIN-12"],
                 },
             ],
             "isDemo": True,
