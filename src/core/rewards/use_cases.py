@@ -39,6 +39,12 @@ class IssueRewardUseCase(UseCase):
         "cosmetic-route-patch-v1",
         "cosmetic-compass-v1",
         "cosmetic-binoculars-v1",
+        "cosmetic-cap-moscow-blue-v1",
+        "cosmetic-cap-moscow-emerald-v1",
+        "cosmetic-cap-moscow-burgundy-v1",
+        "cosmetic-cap-lct2026-blue-v1",
+        "cosmetic-cap-lct2026-emerald-v1",
+        "cosmetic-cap-lct2026-burgundy-v1",
     })
 
     async def execute(
