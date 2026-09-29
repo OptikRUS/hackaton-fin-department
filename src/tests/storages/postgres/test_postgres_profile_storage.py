@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from src.core.profiles.schemas import DeviceId, RegistrationReceipt
@@ -45,6 +47,27 @@ class TestPostgresProfileStorage(FactoryFixture, PostgresFixture):
         )
 
         assert result is None
+
+    async def test_update_pet_replaces_registration_fields(self) -> None:
+        profile = self.factory.profiles.registered_profile(
+            profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
+            device_id="9f1c2d3e4a5b6078",
+        )
+        await self.storage.create_profile(profile=profile)
+        updated_pet = replace(
+            profile.pet,
+            name="Новый питомец",
+            age="TEEN",
+            color="SAND",
+            temperament="Joyful",
+            selected_look_id="HAT",
+        )
+
+        await self.storage.update_pet(profile_id=profile.profile_id, pet=updated_pet)
+
+        assert await self.storage.get_profile(profile_id=profile.profile_id) == replace(
+            profile, pet=updated_pet
+        )
 
     async def test_insert_and_read_registration_receipt(self) -> None:
         await self.postgres_helper.insert_profile(

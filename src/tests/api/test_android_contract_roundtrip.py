@@ -42,6 +42,47 @@ def android_example(name: str) -> dict[str, Any]:
     return json.loads((Path(__file__).parents[1] / "data" / name).read_text())
 
 
+async def test_android_reregistration_after_local_identity_migration(
+    production_client: AsyncClient,
+) -> None:
+    original = android_example("android-register-profile.json")
+    original["deviceId"] = "migration-device"
+    original["pet"]["name"] = "Первый питомец"
+    first = await production_client.post(
+        "/api/pets", json=original, headers={"Idempotency-Key": "old-registration"}
+    )
+    assert first.status_code == 201, first.text
+
+    migrated = deepcopy(original)
+    migrated["pet"]["name"] = "Новый питомец"
+    migrated["pet"]["temperament"] = "Joyful"
+    migrated["pet"]["selectedLookId"] = "HAT"
+    repeated = await production_client.post(
+        "/api/pets", json=migrated, headers={"Idempotency-Key": "new-registration"}
+    )
+    assert repeated.status_code == 201, repeated.text
+    assert repeated.json() == {"deviceId": "migration-device"}
+    replay = await production_client.post(
+        "/api/pets", json=migrated, headers={"Idempotency-Key": "new-registration"}
+    )
+    assert replay.status_code == 201, replay.text
+    old_replay = await production_client.post(
+        "/api/pets", json=original, headers={"Idempotency-Key": "old-registration"}
+    )
+    assert old_replay.status_code == 201, old_replay.text
+    changed_replay = await production_client.post(
+        "/api/pets", json=original, headers={"Idempotency-Key": "new-registration"}
+    )
+    assert changed_replay.status_code == 409, changed_replay.text
+    assert changed_replay.json() == {"code": "IDEMPOTENCY_CONFLICT"}
+
+    report = await production_client.get("/api/parents/migration-device")
+    assert report.status_code == 200, report.text
+    assert report.json()["pet"]["name"] == "Новый питомец"
+    assert report.json()["pet"]["temper"] == "Joyful"
+    assert report.json()["pet"]["selectedLookId"] == "HAT"
+
+
 async def test_android_backup_analytics_and_rewards_with_production_dependencies(
     production_client: AsyncClient,
 ) -> None:

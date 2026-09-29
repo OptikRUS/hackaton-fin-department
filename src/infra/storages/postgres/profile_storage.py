@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.profiles.schemas import RegisteredProfile, RegistrationReceipt
+from src.core.profiles.schemas import RegisteredPet, RegisteredProfile, RegistrationReceipt
 from src.core.profiles.storages import ProfileStorage
 from src.infra.storages.postgres.models import ProfileModel, ProfileRegistrationModel
 
@@ -36,6 +36,21 @@ class PostgresProfileStorage(ProfileStorage):
             .returning(ProfileModel),
         )
         return model.to_domain() if model is not None else None
+
+    async def update_pet(self, *, profile_id: UUID, pet: RegisteredPet) -> None:
+        await self.session.execute(
+            update(ProfileModel)
+            .where(ProfileModel.profile_id == profile_id)
+            .values(
+                pet_json={
+                    "name": pet.name,
+                    "age": pet.age,
+                    "color": pet.color,
+                    "temperament": pet.temperament,
+                    "selectedLookId": pet.selected_look_id,
+                }
+            )
+        )
 
     async def get_registration(
         self,

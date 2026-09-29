@@ -89,6 +89,7 @@ class TestRegisterProfileUseCase(FactoryFixture):
         self.storage.get_profile.return_value = self.factory.profiles.registered_profile(
             profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
             device_id="9f1c2d3e4a5b6078",
+            pet_name="Старое имя",
         )
         self.storage.get_registration.return_value = self.factory.profiles.registration_receipt(
             profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
@@ -105,6 +106,7 @@ class TestRegisterProfileUseCase(FactoryFixture):
 
         assert result == self.factory.profiles.register_result(device_id="9f1c2d3e4a5b6078")
         self.storage.insert_registration.assert_not_awaited()
+        self.storage.update_pet.assert_not_awaited()
 
     async def test_new_key_for_same_pet_returns_existing_profile(self) -> None:
         self.storage.get_profile.return_value = self.factory.profiles.registered_profile(
@@ -121,6 +123,7 @@ class TestRegisterProfileUseCase(FactoryFixture):
             device_id="9f1c2d3e4a5b6078", created=False
         )
         self.storage.insert_registration.assert_awaited_once()
+        self.storage.update_pet.assert_not_awaited()
 
     async def test_changed_body_with_reused_key_conflicts(self) -> None:
         self.storage.get_profile.return_value = self.factory.profiles.registered_profile(
@@ -140,11 +143,31 @@ class TestRegisterProfileUseCase(FactoryFixture):
             )
         self.storage.insert_registration.assert_not_awaited()
 
-    async def test_changed_pet_for_existing_profile_conflicts(self) -> None:
+    async def test_changed_pet_for_existing_device_overwrites_pet(self) -> None:
         self.storage.get_profile.return_value = self.factory.profiles.registered_profile(
             profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
             device_id="9f1c2d3e4a5b6078",
             pet_name="Старое имя",
+        )
+
+        result = await self.use_case.execute(
+            params=self.factory.profiles.register_params(device_id="9f1c2d3e4a5b6078"),
+            idempotency_key="registration-2",
+        )
+
+        assert result == self.factory.profiles.register_result(
+            device_id="9f1c2d3e4a5b6078", created=False
+        )
+        self.storage.update_pet.assert_awaited_once_with(
+            profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
+            pet=self.factory.profiles.register_params(device_id="9f1c2d3e4a5b6078").pet,
+        )
+        self.storage.insert_registration.assert_awaited_once()
+
+    async def test_different_device_for_profile_id_conflicts(self) -> None:
+        self.storage.get_profile.return_value = self.factory.profiles.registered_profile(
+            profile_id=DeviceId(value="9f1c2d3e4a5b6078").profile_id,
+            device_id="another-device",
         )
 
         with pytest.raises(ProfileConflictError):
