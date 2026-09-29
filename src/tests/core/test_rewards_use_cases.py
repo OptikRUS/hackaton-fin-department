@@ -10,6 +10,7 @@ from src.core.rewards.exceptions import (
     InvalidRewardReceiptError,
     RewardIdempotencyConflictError,
     RewardReceiptConflictError,
+    UnknownAccessoryError,
 )
 from src.core.rewards.schemas import (
     AccessoryReward,
@@ -19,6 +20,7 @@ from src.core.rewards.schemas import (
 )
 from src.core.rewards.storages import RewardStorage
 from src.core.rewards.use_cases import AckRewardsUseCase, IssueRewardUseCase, ListRewardsUseCase
+from src.infra.api.rewards.schemas import CreateParentRewardRequest, ParentRewardDto
 from src.tests.fixtures import FactoryFixture
 
 
@@ -57,6 +59,12 @@ class TestIssueRewardUseCase(FactoryFixture):
             "cosmetic-route-patch-v1",
             "cosmetic-compass-v1",
             "cosmetic-binoculars-v1",
+            "cosmetic-cap-moscow-blue-v1",
+            "cosmetic-cap-moscow-emerald-v1",
+            "cosmetic-cap-moscow-burgundy-v1",
+            "cosmetic-cap-lct2026-blue-v1",
+            "cosmetic-cap-lct2026-emerald-v1",
+            "cosmetic-cap-lct2026-burgundy-v1",
         ],
     )
     async def test_issue_accepts_known_pet_cosmetic_ids(self, item_id: str) -> None:
@@ -68,6 +76,72 @@ class TestIssueRewardUseCase(FactoryFixture):
             idempotency_key=f"request-{item_id}",
         )
         assert result.reward.reward == AccessoryReward(item_id=item_id)
+
+    @pytest.mark.parametrize(
+        "item_id",
+        [
+            "cosmetic-cap-moscow-blue-v1",
+            "cosmetic-cap-moscow-emerald-v1",
+            "cosmetic-cap-moscow-burgundy-v1",
+            "cosmetic-cap-lct2026-blue-v1",
+            "cosmetic-cap-lct2026-emerald-v1",
+            "cosmetic-cap-lct2026-burgundy-v1",
+        ],
+    )
+    async def test_cap_contract_roundtrip_and_idempotent_replay(self, item_id: str) -> None:
+        body = {
+            "deviceId": "9f1c2d3e4a5b6078",
+            "gameRunId": "run-1",
+            "schemaVersion": 1,
+            "reward": {"type": "ACCESSORY", "itemId": item_id},
+        }
+        request = CreateParentRewardRequest.model_validate(body)
+        result = await self.use_case.execute(
+            profile_id=UUID(int=1),
+            game_run_id=request.game_run_id,
+            reward=request.to_domain(),
+            idempotency_key="cap-request",
+        )
+        wire = ParentRewardDto.from_domain(result.reward, device_id=request.device_id).model_dump(
+            mode="json",
+            by_alias=True,
+        )
+        assert wire["reward"] == body["reward"]
+        assert wire["profileId"] == body["deviceId"]
+        assert wire["gameRunId"] == body["gameRunId"]
+        assert wire["sequence"] == 1
+        self.storage.get_issue_by_key.return_value = result.reward
+        replay = await self.use_case.execute(
+            profile_id=UUID(int=1),
+            game_run_id=request.game_run_id,
+            reward=request.to_domain(),
+            idempotency_key="cap-request",
+        )
+        assert replay.reward == result.reward
+        assert replay.created is False
+        self.storage.insert_reward.assert_awaited_once()
+        other = (
+            "cosmetic-cap-moscow-blue-v1"
+            if "lct2026" in item_id
+            else "cosmetic-cap-lct2026-blue-v1"
+        )
+        with pytest.raises(RewardIdempotencyConflictError):
+            await self.use_case.execute(
+                profile_id=UUID(int=1),
+                game_run_id="run-1",
+                reward=AccessoryReward(item_id=other),
+                idempotency_key="cap-request",
+            )
+
+    async def test_issue_rejects_unknown_cap_without_creating_grant(self) -> None:
+        with pytest.raises(UnknownAccessoryError):
+            await self.use_case.execute(
+                profile_id=UUID(int=1),
+                game_run_id="run-1",
+                reward=AccessoryReward(item_id="cosmetic-cap-moscow-unknown-v1"),
+                idempotency_key="request-unknown-cap",
+            )
+        self.storage.insert_reward.assert_not_awaited()
 
     async def test_issue_replays_same_key_without_new_grant(self) -> None:
         self.storage.get_issue_by_key.return_value = self.factory.rewards.grant(
