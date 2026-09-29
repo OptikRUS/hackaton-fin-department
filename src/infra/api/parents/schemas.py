@@ -1,5 +1,7 @@
 from enum import StrEnum
+from typing import Self
 
+from src.core.parents.schemas import ParentReport
 from src.infra.api.boundary import BoundaryModel
 from src.infra.api.parents.skill_content import ParentMaterialsResponse
 
@@ -8,15 +10,16 @@ class SkillStatus(StrEnum):
     MASTERED = "MASTERED"
     PRACTICING = "PRACTICING"
     NO_DATA = "NO_DATA"
+    HAS_PROBLEM = "HAS_PROBLEM"
 
 
 class ParentPetResponse(BoundaryModel):
     id: str
     name: str
-    temper: str
-    balance: int
+    temper: str | None
+    balance: int | None
     selected_look_id: str
-    visual_state: str
+    visual_state: str | None
 
 
 class SkillResponse(BoundaryModel):
@@ -39,44 +42,48 @@ class ParentResponse(BoundaryModel):
     skills: list[SkillResponse]
     is_demo: bool
 
-
-DEMO_SKILLS: tuple[tuple[str, str, SkillStatus], ...] = (
-    ("FIN-01", "Сравнивает денежные суммы", SkillStatus.MASTERED),
-    ("FIN-02", "Планирует бюджет на период", SkillStatus.NO_DATA),
-    ("FIN-03", "Учитывает обязательные нужды перед желаниями", SkillStatus.PRACTICING),
-    ("FIN-04", "Следит, чтобы денег хватало до следующего дохода", SkillStatus.NO_DATA),
-    ("FIN-05", "Последовательно собирает на выбранную цель", SkillStatus.MASTERED),
-    ("FIN-06", "Откладывает желанную покупку ради приоритета", SkillStatus.NO_DATA),
-    ("FIN-07", "Создаёт запас на непредвиденные расходы", SkillStatus.NO_DATA),
-    ("FIN-08", "Перестраивает действия после неожиданной траты", SkillStatus.PRACTICING),
-    ("FIN-09", "Сопоставляет денежные и другие затраты", SkillStatus.NO_DATA),
-    ("FIN-10", "Планирует дополнительный заработок", SkillStatus.NO_DATA),
-    ("FIN-11", "Разбирает финансовые последствия и меняет решение", SkillStatus.NO_DATA),
-    ("FIN-12", "Понимает свои доходы и расходы", SkillStatus.NO_DATA),
-)
-
-
-def demo_skills(materials: ParentMaterialsResponse) -> list[SkillResponse]:
-    content_by_id = {skill.skill_id: skill for skill in materials.skills}
-    skills: list[SkillResponse] = []
-    for skill_id, title, status in DEMO_SKILLS:
-        content = content_by_id.get(skill_id)
-        skills.append(
-            SkillResponse(
-                id=skill_id,
-                title=title,
-                status=status,
-                is_mastered=(
-                    None if status == SkillStatus.NO_DATA else status == SkillStatus.MASTERED
+    @classmethod
+    def from_domain(cls, *, report: ParentReport, materials: ParentMaterialsResponse) -> Self:
+        content_by_id = {skill.skill_id: skill for skill in materials.skills}
+        status_by_id = {
+            skill.skill_id: SkillStatus(skill.status) for skill in report.skill_statuses
+        }
+        skills: list[SkillResponse] = []
+        for skill_id, title in SKILL_TITLES:
+            status = status_by_id[skill_id]
+            content = content_by_id.get(skill_id)
+            skills.append(
+                SkillResponse(
+                    id=skill_id,
+                    title=title,
+                    status=status,
+                    is_mastered=(
+                        None if status == SkillStatus.NO_DATA else status == SkillStatus.MASTERED
+                    ),
+                    materials_available=content is not None,
+                    learning_goal=content.learning_goal if content else "",
+                    story=content.story if content else "",
+                    replace_with_parent_story=content.replace_with_parent_story if content else "",
+                    conversation_starters=list(content.conversation_starters) if content else [],
+                    parent_takeaway=content.parent_takeaway if content else "",
+                    research_basis=content.research_basis if content else "",
+                    research_sources=list(content.research_sources) if content else [],
                 ),
-                materials_available=content is not None,
-                learning_goal=content.learning_goal if content else "",
-                story=content.story if content else "",
-                replace_with_parent_story=content.replace_with_parent_story if content else "",
-                conversation_starters=list(content.conversation_starters) if content else [],
-                parent_takeaway=content.parent_takeaway if content else "",
-                research_basis=content.research_basis if content else "",
-                research_sources=list(content.research_sources) if content else [],
-            ),
-        )
-    return skills
+            )
+        return cls(pet=ParentPetResponse.model_validate(report.pet), skills=skills, is_demo=False)
+
+
+SKILL_TITLES: tuple[tuple[str, str], ...] = (
+    ("FIN-01", "Сравнивает денежные суммы"),
+    ("FIN-02", "Планирует бюджет на период"),
+    ("FIN-03", "Учитывает обязательные нужды перед желаниями"),
+    ("FIN-04", "Следит, чтобы денег хватало до следующего дохода"),
+    ("FIN-05", "Последовательно собирает на выбранную цель"),
+    ("FIN-06", "Откладывает желанную покупку ради приоритета"),
+    ("FIN-07", "Создаёт запас на непредвиденные расходы"),
+    ("FIN-08", "Перестраивает действия после неожиданной траты"),
+    ("FIN-09", "Сопоставляет денежные и другие затраты"),
+    ("FIN-10", "Планирует дополнительный заработок"),
+    ("FIN-11", "Разбирает финансовые последствия и меняет решение"),
+    ("FIN-12", "Понимает свои доходы и расходы"),
+)

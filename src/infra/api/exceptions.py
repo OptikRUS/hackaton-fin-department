@@ -18,6 +18,7 @@ from src.core.analytics.exceptions import (
     UnsupportedAnalyticsSchemaError,
 )
 from src.core.exceptions import BaseExceptionError
+from src.core.parents.exceptions import ParentReportNotFoundError
 from src.core.profiles.exceptions import (
     InvalidRegistrationError,
     ProfileConflictError,
@@ -93,6 +94,7 @@ exception_handlers: ExceptionHandlers = {
     InvalidRegistrationError: domain_exception_handler(status.HTTP_400_BAD_REQUEST),
     ProfileConflictError: domain_exception_handler(status.HTTP_409_CONFLICT),
     RegistrationIdempotencyConflictError: domain_exception_handler(status.HTTP_409_CONFLICT),
+    ParentReportNotFoundError: domain_exception_handler(status.HTTP_404_NOT_FOUND),
     InvalidSnapshotRequestError: domain_exception_handler(status.HTTP_400_BAD_REQUEST),
     SnapshotNotFoundError: domain_exception_handler(status.HTTP_404_NOT_FOUND),
     SnapshotRevisionConflictError: domain_exception_handler(status.HTTP_409_CONFLICT),

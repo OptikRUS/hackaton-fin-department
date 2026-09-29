@@ -6,9 +6,11 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
+from src.core.parents.schemas import ParentPet, ParentReport, ParentSkillStatus
+from src.core.parents.use_cases import GetParentReportUseCase
 from src.infra.api.parents import skill_content
 from src.infra.api.parents.skill_content import ParentMaterialsResponse
-from src.tests.fixtures import APIFixture
+from src.tests.fixtures import APIFixture, ContainerFixture
 
 UNPUBLISHED = {
     "schemaVersion": 1,
@@ -50,7 +52,27 @@ def published_catalogue() -> dict[str, Any]:
     }
 
 
-class TestParentMaterialsAPI(APIFixture):
+class TestParentMaterialsAPI(APIFixture, ContainerFixture):
+    @pytest.fixture(autouse=True)
+    async def setup(self) -> None:
+        self.use_case = await self.container_helper.override_use_case(
+            use_case_type=GetParentReportUseCase,
+        )
+        self.use_case.execute.return_value = ParentReport(
+            pet=ParentPet(
+                id="test-device",
+                name="Лис",
+                temper=None,
+                balance=None,
+                selected_look_id="PLAIN",
+                visual_state=None,
+            ),
+            skill_statuses=tuple(
+                ParentSkillStatus(skill_id=f"FIN-{number:02d}", status="NO_DATA")
+                for number in range(1, 13)
+            ),
+        )
+
     async def test_catalogue_is_published_without_profile_or_skill_assessment(self) -> None:
         expected_materials = json.loads(
             await to_thread(

@@ -136,6 +136,66 @@ async def assert_reward_roundtrip(client: AsyncClient, device_id: str, run_id: s
     assert redelivered.json() == pulled.json()
 
 
+class TestParentReportRoundtrip:
+    async def test_current_android_snapshot_and_analytics_populate_parent_report(
+        self, production_client: AsyncClient
+    ) -> None:
+        client = production_client
+        registration = android_example("android-register-profile.json")
+        snapshot = android_example("android-legacy-snapshot-upload.json")
+        device_id = registration["deviceId"]
+        await register_skill_profile(client, device_id)
+
+        before_snapshot = await client.get(f"/api/parents/{device_id}")
+        assert before_snapshot.status_code == 200, before_snapshot.text
+        assert before_snapshot.json()["pet"] == {
+            "id": device_id,
+            "name": "Рыжик",
+            "temper": "Curious",
+            "balance": None,
+            "selectedLookId": "PLAIN",
+            "visualState": None,
+        }
+        assert before_snapshot.json()["isDemo"] is False
+        assert {skill["status"] for skill in before_snapshot.json()["skills"]} == {"NO_DATA"}
+
+        saved = await client.put(
+            "/v1/profiles/snapshot",
+            json=snapshot,
+            headers={"Idempotency-Key": snapshot["uploadId"]},
+        )
+        assert saved.status_code == 200, saved.text
+        payload = mixed_skill_upload()
+        await upload_skills(client, payload)
+
+        report = await client.get(f"/api/parents/{device_id}")
+        assert report.status_code == 200, report.text
+        assert report.json()["pet"] == {
+            "id": device_id,
+            "name": "Рыжик",
+            "temper": None,
+            "balance": 100,
+            "selectedLookId": "PLAIN",
+            "visualState": "NORMAL",
+        }
+        skills = {skill["id"]: skill for skill in report.json()["skills"]}
+        assert len(skills) == 12
+        assert skills["FIN-01"]["status"] == "MASTERED"
+        assert skills["FIN-01"]["isMastered"] is True
+        assert skills["FIN-11"]["status"] == "HAS_PROBLEM"
+        assert skills["FIN-11"]["isMastered"] is False
+        assert skills["FIN-02"]["status"] == "NO_DATA"
+        assert skills["FIN-02"]["isMastered"] is None
+        assert skills["FIN-01"]["materialsAvailable"] is True
+
+        other_run = android_example("android-analytics-upload.json")
+        other_run.update(batchId="new-run-before-snapshot", gameRunId="new-run")
+        await upload_skills(client, other_run)
+        still_current = await client.get(f"/api/parents/{device_id}")
+        assert still_current.status_code == 200, still_current.text
+        assert still_current.json()["skills"] == report.json()["skills"]
+
+
 MIXED_SKILL_STATUSES = {
     "FIN-01": "MASTERED",
     "FIN-02": "NO_DATA",
