@@ -30,8 +30,8 @@
 | src/core/profiles/\_\_init\_\_.py                                       |        0 |        0 |    100% |           |
 | src/core/profiles/exceptions.py                                         |        7 |        0 |    100% |           |
 | src/core/profiles/schemas.py                                            |       59 |        8 |     86% |23-24, 61, 63, 65, 68-69, 72 |
-| src/core/profiles/storages.py                                           |       12 |        0 |    100% |           |
-| src/core/profiles/use\_cases.py                                         |       26 |        0 |    100% |           |
+| src/core/profiles/storages.py                                           |       14 |        0 |    100% |           |
+| src/core/profiles/use\_cases.py                                         |       28 |        0 |    100% |           |
 | src/core/rewards/\_\_init\_\_.py                                        |        0 |        0 |    100% |           |
 | src/core/rewards/exceptions.py                                          |       23 |        0 |    100% |           |
 | src/core/rewards/schemas.py                                             |       74 |       13 |     82% |24, 34, 37-38, 55-56, 58, 60, 129, 132, 141, 146-147 |
@@ -104,10 +104,10 @@
 | src/infra/storages/postgres/config.py                                   |        4 |        0 |    100% |           |
 | src/infra/storages/postgres/models.py                                   |      157 |        1 |     99% |       258 |
 | src/infra/storages/postgres/pet\_storage.py                             |       12 |        0 |    100% |           |
-| src/infra/storages/postgres/profile\_storage.py                         |       23 |        0 |    100% |           |
+| src/infra/storages/postgres/profile\_storage.py                         |       25 |        0 |    100% |           |
 | src/infra/storages/postgres/rewards\_storage.py                         |       46 |        1 |     98% |        84 |
 | src/infra/storages/postgres/snapshot\_storage.py                        |       27 |        0 |    100% |           |
-| **TOTAL**                                                               | **2718** |  **155** | **94%** |           |
+| **TOTAL**                                                               | **2724** |  **155** | **94%** |           |
 
 
 ## Setup coverage badge
