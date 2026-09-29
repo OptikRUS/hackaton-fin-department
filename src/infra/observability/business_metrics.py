@@ -14,15 +14,15 @@ from src.infra.observability.metrics import REGISTRY
 
 _BALANCE_BUCKETS = (
     0.0,
+    50.0,
     100.0,
-    250.0,
-    500.0,
+    150.0,
+    200.0,
+    300.0,
+    400.0,
+    600.0,
+    800.0,
     1000.0,
-    2500.0,
-    5000.0,
-    10000.0,
-    25000.0,
-    50000.0,
     math.inf,
 )
 _COUNT_BUCKETS = (0.0, 1.0, 2.0, 3.0, 5.0, 8.0, 13.0, 21.0, 34.0, math.inf)
@@ -115,6 +115,7 @@ class _Distribution:
         for index, bound in enumerate(self._buckets):
             if value <= bound:
                 self._bucket_counts[index] += 1
+                break
 
     def publish(self) -> None:
         self._sum_gauge.set(self._sum)
