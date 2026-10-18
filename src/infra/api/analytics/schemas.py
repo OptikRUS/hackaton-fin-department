@@ -81,6 +81,19 @@ class SkillObservationRequest(StrictBoundaryModel):
     rule_version: Annotated[int, Field(ge=1)] = 1
 
 
+class SkillExplanationEvidence(StrictBoundaryModel):
+    episode_id: Annotated[str, Field(min_length=1)]
+    source_event_ids: Annotated[list[str], Field(min_length=1)]
+    text: Annotated[str, Field(min_length=1, max_length=400)]
+
+
+class SkillExplanation(StrictBoundaryModel):
+    version: Literal[1] = 1
+    description: Annotated[str, Field(min_length=1, max_length=400)]
+    summary: Annotated[str, Field(min_length=1, max_length=600)]
+    evidence: Annotated[list[SkillExplanationEvidence], Field(max_length=2)]
+
+
 class SkillEvidenceRequest(StrictBoundaryModel):
     skill_id: SkillId
     completed_episodes: Annotated[int, Field(ge=0)]
@@ -92,6 +105,7 @@ class SkillEvidenceRequest(StrictBoundaryModel):
     supported_without_game_hints: Annotated[int, Field(ge=0)]
     assisted_episodes: Annotated[int, Field(ge=0)]
     observations: list[SkillObservationRequest]
+    explanation: SkillExplanation | None = None
 
 
 class AnalyticsUploadRequest(StrictBoundaryModel):
@@ -148,6 +162,7 @@ class SkillAssessmentResponse(BoundaryModel):
     skill_id: SkillId
     status: Literal["MASTERED", "PRACTICING", "NO_DATA", "HAS_PROBLEM"]
     policy_version: str
+    explanation: SkillExplanation | None = None
 
 
 class SkillAssessmentsResponse(BoundaryModel):
@@ -166,6 +181,7 @@ class SkillAssessmentsResponse(BoundaryModel):
                     "skillId": skill.skill_id,
                     "status": skill.status,
                     "policyVersion": skill.policy_version,
+                    "explanation": skill.explanation,
                 })
                 for skill in assessment.skills
             ],

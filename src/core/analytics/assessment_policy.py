@@ -12,6 +12,7 @@ def calculate_assessments(
     game_run_id: str,
     based_on_history_sequence: int,
     observations: list[dict[str, Any]],
+    explanations: dict[str, dict[str, Any]] | None = None,
 ) -> SkillAssessments:
     """Assess accepted observations; later occurrences replace the same skill episode."""
     latest = {
@@ -36,6 +37,7 @@ def calculate_assessments(
                 skill_id=skill,
                 status=_status(suitable_by_skill[skill]),
                 policy_version=POLICY_VERSION,
+                explanation=(explanations or {}).get(skill),
             )
             for skill in _SKILL_IDS
         ),

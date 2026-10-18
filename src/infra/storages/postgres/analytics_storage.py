@@ -242,7 +242,12 @@ class PostgresAnalyticsStorage(AnalyticsStorage):
             policy_version=assessment.skills[0].policy_version,
             based_on_history_sequence=assessment.based_on_history_sequence,
             skills=[
-                {"skillId": skill.skill_id, "status": skill.status} for skill in assessment.skills
+                {
+                    "skillId": skill.skill_id,
+                    "status": skill.status,
+                    **({"explanation": skill.explanation} if skill.explanation is not None else {}),
+                }
+                for skill in assessment.skills
             ],
         )
         await self.session.execute(

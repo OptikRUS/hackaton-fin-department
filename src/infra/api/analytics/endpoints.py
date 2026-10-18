@@ -43,6 +43,7 @@ async def upload_analytics(
 @router.post(
     "/skills/query",
     response_model=SkillAssessmentsResponse,
+    response_model_exclude_none=True,
     responses={
         status.HTTP_403_FORBIDDEN: {"model": AnalyticsError},
         status.HTTP_409_CONFLICT: {"model": AnalyticsError},

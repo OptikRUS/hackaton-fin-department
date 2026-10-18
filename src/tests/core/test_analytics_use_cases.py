@@ -38,6 +38,26 @@ class TestUploadAnalyticsUseCase(FactoryFixture):
         with pytest.raises(AnalyticsIdempotencyConflictError):
             await self.use_case.execute(params=changed, idempotency_key="batch-1")
 
+    async def test_mobile_explanations_round_trip_through_assessment(self) -> None:
+        explanation = {
+            "version": 1,
+            "description": "Учится сравнивать суммы.",
+            "summary": "Пока мало данных.",
+            "evidence": [],
+        }
+        skills = copy.deepcopy(self.factory.analytics.upload_params(profile_id=UUID(int=1)).skills)
+        for skill in skills:
+            skill["explanation"] = explanation
+        upload = self.factory.analytics.upload_params(profile_id=UUID(int=1), skills=skills)
+
+        await self.use_case.execute(params=upload, idempotency_key="batch-1")
+        result = await GetSkillAssessmentsUseCase(analytics_storage=self.storage).execute(
+            profile_id=UUID(int=1), game_run_id="run-1"
+        )
+
+        assert len(result.skills) == 12
+        assert all(skill.explanation == explanation for skill in result.skills)
+
     async def test_reject_stale_and_conflicting_original_fact(self) -> None:
         fact: dict[str, Any] = {
             "eventId": "event-1",
