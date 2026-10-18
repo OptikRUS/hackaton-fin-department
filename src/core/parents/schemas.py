@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -15,6 +16,7 @@ class ParentPet:
 class ParentSkillStatus:
     skill_id: str
     status: str
+    explanation: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

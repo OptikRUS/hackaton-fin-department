@@ -1,7 +1,10 @@
 from enum import StrEnum
 from typing import Self
 
+from pydantic import Field
+
 from src.core.parents.schemas import ParentReport
+from src.infra.api.analytics.schemas import SkillExplanation, supported_explanation
 from src.infra.api.boundary import BoundaryModel
 from src.infra.api.parents.skill_content import ParentMaterialsResponse
 
@@ -26,6 +29,10 @@ class SkillResponse(BoundaryModel):
     id: str
     title: str
     status: SkillStatus
+    explanation: SkillExplanation | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     is_mastered: bool | None
     materials_available: bool
     learning_goal: str
@@ -45,18 +52,18 @@ class ParentResponse(BoundaryModel):
     @classmethod
     def from_domain(cls, *, report: ParentReport, materials: ParentMaterialsResponse) -> Self:
         content_by_id = {skill.skill_id: skill for skill in materials.skills}
-        status_by_id = {
-            skill.skill_id: SkillStatus(skill.status) for skill in report.skill_statuses
-        }
+        status_by_id = {skill.skill_id: skill for skill in report.skill_statuses}
         skills: list[SkillResponse] = []
         for skill_id, title in SKILL_TITLES:
-            status = status_by_id[skill_id]
+            saved = status_by_id[skill_id]
+            status = SkillStatus(saved.status)
             content = content_by_id.get(skill_id)
             skills.append(
                 SkillResponse(
                     id=skill_id,
                     title=title,
                     status=status,
+                    explanation=supported_explanation(saved.explanation),
                     is_mastered=(
                         None if status == SkillStatus.NO_DATA else status == SkillStatus.MASTERED
                     ),

@@ -35,20 +35,23 @@ class GetParentReportUseCase(UseCase):
             if snapshot is not None
             else None
         )
-        statuses = (
-            {skill.skill_id: skill.status for skill in assessment.skills}
-            if assessment is not None
-            else {}
+        assessed_skills = (
+            {skill.skill_id: skill for skill in assessment.skills} if assessment is not None else {}
         )
+        skill_statuses: list[ParentSkillStatus] = []
+        for number in range(1, 13):
+            skill_id = f"FIN-{number:02d}"
+            saved = assessed_skills.get(skill_id)
+            skill_statuses.append(
+                ParentSkillStatus(
+                    skill_id=skill_id,
+                    status=saved.status if saved is not None else "NO_DATA",
+                    explanation=saved.explanation if saved is not None else None,
+                )
+            )
         return ParentReport(
             pet=_parent_pet(profile=profile, snapshot=snapshot),
-            skill_statuses=tuple(
-                ParentSkillStatus(
-                    skill_id=f"FIN-{number:02d}",
-                    status=statuses.get(f"FIN-{number:02d}", "NO_DATA"),
-                )
-                for number in range(1, 13)
-            ),
+            skill_statuses=tuple(skill_statuses),
         )
 
 

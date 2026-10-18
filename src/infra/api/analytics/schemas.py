@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, ValidationError, field_validator
 
 from src.core.analytics.enums import FactDetailType, ObservationReason
 from src.core.analytics.schemas import (
@@ -88,10 +88,20 @@ class SkillExplanationEvidence(StrictBoundaryModel):
 
 
 class SkillExplanation(StrictBoundaryModel):
-    version: Literal[1] = 1
+    version: Annotated[int, Field(strict=True)]
     description: Annotated[str, Field(min_length=1, max_length=400)]
     summary: Annotated[str, Field(min_length=1, max_length=600)]
     evidence: Annotated[list[SkillExplanationEvidence], Field(max_length=2)]
+
+
+def supported_explanation(value: dict[str, Any] | None) -> SkillExplanation | None:
+    if value is None:
+        return None
+    try:
+        explanation = SkillExplanation.parse(value)
+    except ValidationError:
+        return None
+    return explanation if explanation.version == 1 else None
 
 
 class SkillEvidenceRequest(StrictBoundaryModel):
@@ -162,7 +172,10 @@ class SkillAssessmentResponse(BoundaryModel):
     skill_id: SkillId
     status: Literal["MASTERED", "PRACTICING", "NO_DATA", "HAS_PROBLEM"]
     policy_version: str
-    explanation: SkillExplanation | None = None
+    explanation: SkillExplanation | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
 
 
 class SkillAssessmentsResponse(BoundaryModel):
@@ -181,7 +194,7 @@ class SkillAssessmentsResponse(BoundaryModel):
                     "skillId": skill.skill_id,
                     "status": skill.status,
                     "policyVersion": skill.policy_version,
-                    "explanation": skill.explanation,
+                    "explanation": supported_explanation(skill.explanation),
                 })
                 for skill in assessment.skills
             ],
