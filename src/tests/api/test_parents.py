@@ -1,5 +1,6 @@
 import json
 from asyncio import to_thread
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -169,6 +170,28 @@ class TestGetParentReportAPI(APIFixture, ContainerFixture):
         assert response.json() == {"code": "PARENT_REPORT_NOT_FOUND"}
         self.use_case.execute.assert_awaited_once_with(device_id="87654321876543218765432187654321")
 
+    async def test_returns_saved_explanation_for_matching_skill(self) -> None:
+        explanation = {
+            "version": 1,
+            "description": "Учится сравнивать суммы.",
+            "summary": "Пока мало данных.",
+            "evidence": [],
+        }
+        report = self.use_case.execute.return_value
+        self.use_case.execute.return_value = replace(
+            report,
+            skill_statuses=(
+                replace(report.skill_statuses[0], explanation=explanation),
+                *report.skill_statuses[1:],
+            ),
+        )
+
+        response = await self.api.get_parent_report(pet_id=self.pet_id)
+
+        assert response.status_code == codes.OK
+        assert response.json()["skills"][0]["explanation"] == explanation
+        assert "explanation" not in response.json()["skills"][1]
+
     async def test_accepts_saved_device_id(self) -> None:
         response = await self.api.get_parent_report(pet_id="9f1c2d3e4a5b6078")
 
@@ -193,12 +216,13 @@ class TestGetParentReportAPI(APIFixture, ContainerFixture):
             "id",
             "title",
             "status",
+            "explanation",
             "isMastered",
             "materialsAvailable",
             *material_types,
         }
         assert set(schema["properties"]) == expected_fields
-        assert set(schema["required"]) == expected_fields
+        assert set(schema["required"]) == expected_fields - {"explanation"}
         for field, field_type in material_types.items():
             assert schema["properties"][field]["type"] == field_type
             if field_type == "array":

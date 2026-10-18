@@ -589,13 +589,13 @@ class AnalyticsUploadParams:
             "evidence",
         }:
             raise InvalidAnalyticsError
-        if (
-            type(explanation["version"]) is not int
-            or explanation["version"] != 1
-            or any(
-                not cls._nonempty(explanation[field]) or len(explanation[field]) > limit
-                for field, limit in (("description", 400), ("summary", 600))
-            )
+        if type(explanation["version"]) is not int:
+            raise InvalidAnalyticsError
+        if explanation["version"] != 1:
+            raise UnsupportedAnalyticsSchemaError
+        if any(
+            not cls._nonempty(explanation[field]) or len(explanation[field]) > limit
+            for field, limit in (("description", 400), ("summary", 600))
         ):
             raise InvalidAnalyticsError
         evidence = explanation["evidence"]

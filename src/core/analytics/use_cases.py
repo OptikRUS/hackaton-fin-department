@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from src.core.analytics.assessment_evidence import merge_observations
+from src.core.analytics.assessment_evidence import matching_explanations, merge_observations
 from src.core.analytics.assessment_policy import calculate_assessments
 from src.core.analytics.exceptions import (
     AnalyticsFactConflictError,
@@ -177,15 +177,15 @@ async def _refresh_assessment(
             projection.history_start_sequence,
         ),
     )
+    merged_observations = merge_observations(projections)
     assessment = calculate_assessments(
         game_run_id=game_run_id,
         based_on_history_sequence=max(p.through_history_sequence for p in projections),
-        observations=merge_observations(projections),
-        explanations={
-            skill["skillId"]: skill["explanation"]
-            for skill in latest.skills
-            if isinstance(skill.get("explanation"), dict)
-        },
+        observations=merged_observations,
+        explanations=matching_explanations(
+            latest=latest,
+            merged_observations=merged_observations,
+        ),
     )
     await storage.save_assessment(profile_id=profile_id, assessment=assessment)
     return assessment
