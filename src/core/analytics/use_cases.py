@@ -169,10 +169,23 @@ async def _refresh_assessment(
     )
     if not projections:
         return None
+    latest = max(
+        projections,
+        key=lambda projection: (
+            projection.through_history_sequence,
+            projection.revision,
+            projection.history_start_sequence,
+        ),
+    )
     assessment = calculate_assessments(
         game_run_id=game_run_id,
         based_on_history_sequence=max(p.through_history_sequence for p in projections),
         observations=merge_observations(projections),
+        explanations={
+            skill["skillId"]: skill["explanation"]
+            for skill in latest.skills
+            if isinstance(skill.get("explanation"), dict)
+        },
     )
     await storage.save_assessment(profile_id=profile_id, assessment=assessment)
     return assessment

@@ -236,11 +236,13 @@ FIN-01…FIN-12, идентификатор `skillId`, все перечисле
 Идентичный повтор возвращает прежний результат без изменения ревизии, другой
 запрос с тем же ID получает `409 IDEMPOTENCY_CONFLICT`. Клиент передаёт
 `expectedServerRevision=null` для первой записи, затем последнюю полученную
-ревизию. Устаревшая ревизия даёт `409 SNAPSHOT_REVISION_CONFLICT`. Текущий игровой
-клиент передаёт полный архив `formatVersion=5` без `payloadKind`; переход к новому
-прохождению проверяется через `archivedRuns` и цепочку `nextRunId`. Backend также
-поддерживает компактный мир с `payloadKind="CURRENT_WORLD"`, внутренним
+ревизию. Устаревшая ревизия даёт `409 SNAPSHOT_REVISION_CONFLICT`. Текущий Android
+передаёт компактный мир с `payloadKind="CURRENT_WORLD"`, внутренним
 `worldFormatVersion=1` и `predecessors`; полный журнал для него не нужен.
+Явная замена облачной копии использует тот же PUT с актуальной ревизией и
+checkpoint вытесняемого run в `predecessors`. Старые полные архивы
+`formatVersion=1…5` без `payloadKind` также принимаются; переходы в них
+проверяются через `archivedRuns` и цепочку `nextRunId`.
 Произвольная замена прохождения даёт
 `409 GAME_RUN_CONFLICT`. Если архива нет, скачивание возвращает
 `404 SNAPSHOT_NOT_FOUND`.

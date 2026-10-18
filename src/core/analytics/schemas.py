@@ -569,6 +569,65 @@ class AnalyticsUploadParams:
                     observation, skill_id=skill["skillId"], fact_ids=fact_ids
                 )
             self._validate_counters(skill, observations)
+            self._validate_explanation(skill, observations)
+
+    @classmethod
+    def _validate_explanation(
+        cls,
+        skill: dict[str, Any],
+        observations: list[dict[str, Any]],
+    ) -> None:
+        max_evidence = 2
+        max_evidence_text_length = 400
+        explanation = skill.get("explanation")
+        if explanation is None:
+            return
+        if not isinstance(explanation, dict) or explanation.keys() != {
+            "version",
+            "description",
+            "summary",
+            "evidence",
+        }:
+            raise InvalidAnalyticsError
+        if (
+            type(explanation["version"]) is not int
+            or explanation["version"] != 1
+            or any(
+                not cls._nonempty(explanation[field]) or len(explanation[field]) > limit
+                for field, limit in (("description", 400), ("summary", 600))
+            )
+        ):
+            raise InvalidAnalyticsError
+        evidence = explanation["evidence"]
+        if not isinstance(evidence, list) or len(evidence) > max_evidence:
+            raise InvalidAnalyticsError
+        episodes: set[str] = set()
+        for item in evidence:
+            if not isinstance(item, dict) or item.keys() != {
+                "episodeId",
+                "sourceEventIds",
+                "text",
+            }:
+                raise InvalidAnalyticsError
+            episode_id = item["episodeId"]
+            sources = item["sourceEventIds"]
+            if (
+                not cls._nonempty(episode_id)
+                or episode_id in episodes
+                or not cls._nonempty(item["text"])
+                or len(item["text"]) > max_evidence_text_length
+                or not isinstance(sources, list)
+                or not sources
+                or any(not cls._nonempty(source) for source in sources)
+                or len(set(sources)) != len(sources)
+                or not any(
+                    observation["episodeId"] == episode_id
+                    and set(observation["sourceEventIds"]) == set(sources)
+                    for observation in observations
+                )
+            ):
+                raise InvalidAnalyticsError
+            episodes.add(episode_id)
 
     def _validate_observation(
         self,
@@ -689,6 +748,7 @@ class SkillAssessment:
     skill_id: str
     status: str
     policy_version: str
+    explanation: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
