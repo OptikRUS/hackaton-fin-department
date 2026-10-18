@@ -64,8 +64,8 @@
             <a id="indexLink" class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a id="nextFileLink" class="nav" href="z_4398fff108609f70_schemas_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.16.1">coverage.py v7.16.1</a>,
-            created at 2026-09-29 20:39 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.16.2">coverage.py v7.16.2</a>,
+            created at 2026-10-18 14:46 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -125,20 +125,21 @@
     <p class="run"><span class="n"><a id="t43" href="#t43">43</a></span><span class="t"><span class="op">@</span><span class="nam">router</span><span class="op">.</span><span class="nam">post</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t44" href="#t44">44</a></span><span class="t">    <span class="str">&quot;/skills/query&quot;</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t45" href="#t45">45</a></span><span class="t">    <span class="nam">response_model</span><span class="op">=</span><span class="nam">SkillAssessmentsResponse</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t46" href="#t46">46</a></span><span class="t">    <span class="nam">responses</span><span class="op">=</span><span class="op">{</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t47" href="#t47">47</a></span><span class="t">        <span class="nam">status</span><span class="op">.</span><span class="nam">HTTP_403_FORBIDDEN</span><span class="op">:</span> <span class="op">{</span><span class="str">&quot;model&quot;</span><span class="op">:</span> <span class="nam">AnalyticsError</span><span class="op">}</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t48" href="#t48">48</a></span><span class="t">        <span class="nam">status</span><span class="op">.</span><span class="nam">HTTP_409_CONFLICT</span><span class="op">:</span> <span class="op">{</span><span class="str">&quot;model&quot;</span><span class="op">:</span> <span class="nam">AnalyticsError</span><span class="op">}</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t49" href="#t49">49</a></span><span class="t">    <span class="op">}</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t50" href="#t50">50</a></span><span class="t"><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t51" href="#t51">51</a></span><span class="t"><span class="key">async</span> <span class="key">def</span> <span class="nam">get_skill_assessments</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t52" href="#t52">52</a></span><span class="t">    <span class="nam">body</span><span class="op">:</span> <span class="nam">SkillAssessmentsRequest</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t53" href="#t53">53</a></span><span class="t">    <span class="nam">use_case</span><span class="op">:</span> <span class="nam">FromDishka</span><span class="op">[</span><span class="nam">GetSkillAssessmentsUseCase</span><span class="op">]</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t54" href="#t54">54</a></span><span class="t"><span class="op">)</span> <span class="op">-&gt;</span> <span class="nam">SkillAssessmentsResponse</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t55" href="#t55">55</a></span><span class="t">    <span class="nam">assessment</span> <span class="op">=</span> <span class="key">await</span> <span class="nam">use_case</span><span class="op">.</span><span class="nam">execute</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t56" href="#t56">56</a></span><span class="t">        <span class="nam">profile_id</span><span class="op">=</span><span class="nam">DeviceId</span><span class="op">(</span><span class="nam">value</span><span class="op">=</span><span class="nam">body</span><span class="op">.</span><span class="nam">device_id</span><span class="op">)</span><span class="op">.</span><span class="nam">profile_id</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t57" href="#t57">57</a></span><span class="t">        <span class="nam">game_run_id</span><span class="op">=</span><span class="nam">body</span><span class="op">.</span><span class="nam">game_run_id</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t58" href="#t58">58</a></span><span class="t">    <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t59" href="#t59">59</a></span><span class="t">    <span class="key">return</span> <span class="nam">SkillAssessmentsResponse</span><span class="op">.</span><span class="nam">from_domain</span><span class="op">(</span><span class="nam">assessment</span><span class="op">=</span><span class="nam">assessment</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t46" href="#t46">46</a></span><span class="t">    <span class="nam">response_model_exclude_none</span><span class="op">=</span><span class="key">True</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t47" href="#t47">47</a></span><span class="t">    <span class="nam">responses</span><span class="op">=</span><span class="op">{</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t48" href="#t48">48</a></span><span class="t">        <span class="nam">status</span><span class="op">.</span><span class="nam">HTTP_403_FORBIDDEN</span><span class="op">:</span> <span class="op">{</span><span class="str">&quot;model&quot;</span><span class="op">:</span> <span class="nam">AnalyticsError</span><span class="op">}</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t49" href="#t49">49</a></span><span class="t">        <span class="nam">status</span><span class="op">.</span><span class="nam">HTTP_409_CONFLICT</span><span class="op">:</span> <span class="op">{</span><span class="str">&quot;model&quot;</span><span class="op">:</span> <span class="nam">AnalyticsError</span><span class="op">}</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t50" href="#t50">50</a></span><span class="t">    <span class="op">}</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t51" href="#t51">51</a></span><span class="t"><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t52" href="#t52">52</a></span><span class="t"><span class="key">async</span> <span class="key">def</span> <span class="nam">get_skill_assessments</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t53" href="#t53">53</a></span><span class="t">    <span class="nam">body</span><span class="op">:</span> <span class="nam">SkillAssessmentsRequest</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t54" href="#t54">54</a></span><span class="t">    <span class="nam">use_case</span><span class="op">:</span> <span class="nam">FromDishka</span><span class="op">[</span><span class="nam">GetSkillAssessmentsUseCase</span><span class="op">]</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t55" href="#t55">55</a></span><span class="t"><span class="op">)</span> <span class="op">-&gt;</span> <span class="nam">SkillAssessmentsResponse</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t56" href="#t56">56</a></span><span class="t">    <span class="nam">assessment</span> <span class="op">=</span> <span class="key">await</span> <span class="nam">use_case</span><span class="op">.</span><span class="nam">execute</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t57" href="#t57">57</a></span><span class="t">        <span class="nam">profile_id</span><span class="op">=</span><span class="nam">DeviceId</span><span class="op">(</span><span class="nam">value</span><span class="op">=</span><span class="nam">body</span><span class="op">.</span><span class="nam">device_id</span><span class="op">)</span><span class="op">.</span><span class="nam">profile_id</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t58" href="#t58">58</a></span><span class="t">        <span class="nam">game_run_id</span><span class="op">=</span><span class="nam">body</span><span class="op">.</span><span class="nam">game_run_id</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t59" href="#t59">59</a></span><span class="t">    <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t60" href="#t60">60</a></span><span class="t">    <span class="key">return</span> <span class="nam">SkillAssessmentsResponse</span><span class="op">.</span><span class="nam">from_domain</span><span class="op">(</span><span class="nam">assessment</span><span class="op">=</span><span class="nam">assessment</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -147,8 +148,8 @@
             <a class="nav" href="index.html">&Hat; index</a> &nbsp; &nbsp;
             <a class="nav" href="z_4398fff108609f70_schemas_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
-            <a class="nav" href="https://coverage.readthedocs.io/en/7.16.1">coverage.py v7.16.1</a>,
-            created at 2026-09-29 20:39 +0000
+            <a class="nav" href="https://coverage.readthedocs.io/en/7.16.2">coverage.py v7.16.2</a>,
+            created at 2026-10-18 14:46 +0000
         </p>
     </div>
 </footer>
