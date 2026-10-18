@@ -54,8 +54,8 @@
             </div>
         </aside>
         <h2>
-            <span class="text">216 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">177<span class="text"> run</span></button>
+            <span class="text">220 statements &nbsp;</span>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">181<span class="text"> run</span></button>
             <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">39<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_96501637b1c0b0f5_storages_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.16.2">coverage.py v7.16.2</a>,
-            created at 2026-10-18 14:46 +0000
+            created at 2026-10-18 15:12 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -671,15 +671,15 @@
     <p class="run run2"><span class="n"><a id="t589" href="#t589">589</a></span><span class="t">            <span class="str">&quot;evidence&quot;</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t590" href="#t590">590</a></span><span class="t">        <span class="op">}</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t591" href="#t591">591</a></span><span class="t">            <span class="key">raise</span> <span class="nam">InvalidAnalyticsError</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t592" href="#t592">592</a></span><span class="t">        <span class="key">if</span> <span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t593" href="#t593">593</a></span><span class="t">            <span class="nam">type</span><span class="op">(</span><span class="nam">explanation</span><span class="op">[</span><span class="str">&quot;version&quot;</span><span class="op">]</span><span class="op">)</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">int</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t594" href="#t594">594</a></span><span class="t">            <span class="key">or</span> <span class="nam">explanation</span><span class="op">[</span><span class="str">&quot;version&quot;</span><span class="op">]</span> <span class="op">!=</span> <span class="num">1</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t595" href="#t595">595</a></span><span class="t">            <span class="key">or</span> <span class="nam">any</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t596" href="#t596">596</a></span><span class="t">                <span class="key">not</span> <span class="nam">cls</span><span class="op">.</span><span class="nam">_nonempty</span><span class="op">(</span><span class="nam">explanation</span><span class="op">[</span><span class="nam">field</span><span class="op">]</span><span class="op">)</span> <span class="key">or</span> <span class="nam">len</span><span class="op">(</span><span class="nam">explanation</span><span class="op">[</span><span class="nam">field</span><span class="op">]</span><span class="op">)</span> <span class="op">&gt;</span> <span class="nam">limit</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t597" href="#t597">597</a></span><span class="t">                <span class="key">for</span> <span class="nam">field</span><span class="op">,</span> <span class="nam">limit</span> <span class="key">in</span> <span class="op">(</span><span class="op">(</span><span class="str">&quot;description&quot;</span><span class="op">,</span> <span class="num">400</span><span class="op">)</span><span class="op">,</span> <span class="op">(</span><span class="str">&quot;summary&quot;</span><span class="op">,</span> <span class="num">600</span><span class="op">)</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t598" href="#t598">598</a></span><span class="t">            <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t592" href="#t592">592</a></span><span class="t">        <span class="key">if</span> <span class="nam">type</span><span class="op">(</span><span class="nam">explanation</span><span class="op">[</span><span class="str">&quot;version&quot;</span><span class="op">]</span><span class="op">)</span> <span class="key">is</span> <span class="key">not</span> <span class="nam">int</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="mis show_mis"><span class="n"><a id="t593" href="#t593">593</a></span><span class="t">            <span class="key">raise</span> <span class="nam">InvalidAnalyticsError</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t594" href="#t594">594</a></span><span class="t">        <span class="key">if</span> <span class="nam">explanation</span><span class="op">[</span><span class="str">&quot;version&quot;</span><span class="op">]</span> <span class="op">!=</span> <span class="num">1</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t595" href="#t595">595</a></span><span class="t">            <span class="key">raise</span> <span class="nam">UnsupportedAnalyticsSchemaError</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t596" href="#t596">596</a></span><span class="t">        <span class="key">if</span> <span class="nam">any</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t597" href="#t597">597</a></span><span class="t">            <span class="key">not</span> <span class="nam">cls</span><span class="op">.</span><span class="nam">_nonempty</span><span class="op">(</span><span class="nam">explanation</span><span class="op">[</span><span class="nam">field</span><span class="op">]</span><span class="op">)</span> <span class="key">or</span> <span class="nam">len</span><span class="op">(</span><span class="nam">explanation</span><span class="op">[</span><span class="nam">field</span><span class="op">]</span><span class="op">)</span> <span class="op">&gt;</span> <span class="nam">limit</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t598" href="#t598">598</a></span><span class="t">            <span class="key">for</span> <span class="nam">field</span><span class="op">,</span> <span class="nam">limit</span> <span class="key">in</span> <span class="op">(</span><span class="op">(</span><span class="str">&quot;description&quot;</span><span class="op">,</span> <span class="num">400</span><span class="op">)</span><span class="op">,</span> <span class="op">(</span><span class="str">&quot;summary&quot;</span><span class="op">,</span> <span class="num">600</span><span class="op">)</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t599" href="#t599">599</a></span><span class="t">        <span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="mis show_mis"><span class="n"><a id="t600" href="#t600">600</a></span><span class="t">            <span class="key">raise</span> <span class="nam">InvalidAnalyticsError</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t600" href="#t600">600</a></span><span class="t">            <span class="key">raise</span> <span class="nam">InvalidAnalyticsError</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t601" href="#t601">601</a></span><span class="t">        <span class="nam">evidence</span> <span class="op">=</span> <span class="nam">explanation</span><span class="op">[</span><span class="str">&quot;evidence&quot;</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t602" href="#t602">602</a></span><span class="t">        <span class="key">if</span> <span class="key">not</span> <span class="nam">isinstance</span><span class="op">(</span><span class="nam">evidence</span><span class="op">,</span> <span class="nam">list</span><span class="op">)</span> <span class="key">or</span> <span class="nam">len</span><span class="op">(</span><span class="nam">evidence</span><span class="op">)</span> <span class="op">&gt;</span> <span class="nam">max_evidence</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="mis show_mis"><span class="n"><a id="t603" href="#t603">603</a></span><span class="t">            <span class="key">raise</span> <span class="nam">InvalidAnalyticsError</span>&nbsp;</span><span class="r"></span></p>
@@ -847,7 +847,7 @@
             <a class="nav" href="z_96501637b1c0b0f5_storages_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.16.2">coverage.py v7.16.2</a>,
-            created at 2026-10-18 14:46 +0000
+            created at 2026-10-18 15:12 +0000
         </p>
     </div>
 </footer>
