@@ -54,8 +54,8 @@
             </div>
         </aside>
         <h2>
-            <span class="text">221 statements &nbsp;</span>
-            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">182<span class="text"> run</span></button>
+            <span class="text">222 statements &nbsp;</span>
+            <button type="button" class="run button_toggle_run" value="run" data-shortcut="r" title="Toggle lines run">183<span class="text"> run</span></button>
             <button type="button" class="mis show_mis button_toggle_mis" value="mis" data-shortcut="m" title="Toggle lines missing">39<span class="text"> missing</span></button>
             <button type="button" class="exc show_exc button_toggle_exc" value="exc" data-shortcut="x" title="Toggle lines excluded">0<span class="text"> excluded</span></button>
         </h2>
@@ -65,7 +65,7 @@
             <a id="nextFileLink" class="nav" href="z_96501637b1c0b0f5_storages_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.16.2">coverage.py v7.16.2</a>,
-            created at 2026-10-19 18:24 +0000
+            created at 2026-10-19 18:52 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -832,13 +832,14 @@
     <p class="pln"><span class="n"><a id="t750" href="#t750">750</a></span><span class="t">    <span class="nam">policy_version</span><span class="op">:</span> <span class="nam">str</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t751" href="#t751">751</a></span><span class="t">    <span class="nam">explanation</span><span class="op">:</span> <span class="nam">dict</span><span class="op">[</span><span class="nam">str</span><span class="op">,</span> <span class="nam">Any</span><span class="op">]</span> <span class="op">|</span> <span class="key">None</span> <span class="op">=</span> <span class="key">None</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t752" href="#t752">752</a></span><span class="t">    <span class="nam">assessment_reason</span><span class="op">:</span> <span class="nam">str</span> <span class="op">|</span> <span class="key">None</span> <span class="op">=</span> <span class="key">None</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t753" href="#t753">753</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t753" href="#t753">753</a></span><span class="t">    <span class="nam">observation_counts</span><span class="op">:</span> <span class="nam">dict</span><span class="op">[</span><span class="nam">str</span><span class="op">,</span> <span class="nam">int</span><span class="op">]</span> <span class="op">|</span> <span class="key">None</span> <span class="op">=</span> <span class="key">None</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t754" href="#t754">754</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t755" href="#t755">755</a></span><span class="t"><span class="op">@</span><span class="nam">dataclass</span><span class="op">(</span><span class="nam">frozen</span><span class="op">=</span><span class="key">True</span><span class="op">,</span> <span class="nam">slots</span><span class="op">=</span><span class="key">True</span><span class="op">,</span> <span class="nam">kw_only</span><span class="op">=</span><span class="key">True</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t756" href="#t756">756</a></span><span class="t"><span class="key">class</span> <span class="nam">SkillAssessments</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t757" href="#t757">757</a></span><span class="t">    <span class="nam">game_run_id</span><span class="op">:</span> <span class="nam">str</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t758" href="#t758">758</a></span><span class="t">    <span class="nam">based_on_history_sequence</span><span class="op">:</span> <span class="nam">int</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t759" href="#t759">759</a></span><span class="t">    <span class="nam">skills</span><span class="op">:</span> <span class="nam">tuple</span><span class="op">[</span><span class="nam">SkillAssessment</span><span class="op">,</span> <span class="op">...</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t755" href="#t755">755</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t756" href="#t756">756</a></span><span class="t"><span class="op">@</span><span class="nam">dataclass</span><span class="op">(</span><span class="nam">frozen</span><span class="op">=</span><span class="key">True</span><span class="op">,</span> <span class="nam">slots</span><span class="op">=</span><span class="key">True</span><span class="op">,</span> <span class="nam">kw_only</span><span class="op">=</span><span class="key">True</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t757" href="#t757">757</a></span><span class="t"><span class="key">class</span> <span class="nam">SkillAssessments</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t758" href="#t758">758</a></span><span class="t">    <span class="nam">game_run_id</span><span class="op">:</span> <span class="nam">str</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t759" href="#t759">759</a></span><span class="t">    <span class="nam">based_on_history_sequence</span><span class="op">:</span> <span class="nam">int</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t760" href="#t760">760</a></span><span class="t">    <span class="nam">skills</span><span class="op">:</span> <span class="nam">tuple</span><span class="op">[</span><span class="nam">SkillAssessment</span><span class="op">,</span> <span class="op">...</span><span class="op">]</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -848,7 +849,7 @@
             <a class="nav" href="z_96501637b1c0b0f5_storages_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.16.2">coverage.py v7.16.2</a>,
-            created at 2026-10-19 18:24 +0000
+            created at 2026-10-19 18:52 +0000
         </p>
     </div>
 </footer>
