@@ -26,22 +26,22 @@ def observation(episode: str, outcome: str = "SUPPORTED", **overrides: object) -
 @pytest.mark.parametrize(
     ("observations", "status", "reason_part"),
     [
-        ([], "NO_DATA", "Нет завершённых"),
-        ([observation("a")], "PRACTICING", "пока недостаточно"),
+        ([], "NO_DATA", "Завершённых игровых ситуаций"),
+        ([observation("a")], "PRACTICING", "обычный этап"),
         (
             [observation("a"), observation("b")],
             "MASTERED",
-            "Успешных ситуаций без игровых подсказок: 2",
+            "минимум два успеха без игровых подсказок",
         ),
         (
             [observation("a"), observation("b", assistance=["HINT"])],
             "PRACTICING",
-            "пока недостаточно",
+            "обычный этап",
         ),
         (
             [observation("a"), observation("b", assistance=["INFORMATION_ONLY"])],
             "MASTERED",
-            "Успешных ситуаций без игровых подсказок: 2",
+            "минимум два успеха без игровых подсказок",
         ),
         (
             [
@@ -51,17 +51,17 @@ def observation(episode: str, outcome: str = "SUPPORTED", **overrides: object) -
                 observation("d", "DIFFICULTY"),
             ],
             "PRACTICING",
-            "пока недостаточно",
+            "обычный этап",
         ),
         (
             [observation("a", "DIFFICULTY"), observation("b", "DIFFICULTY")],
             "HAS_PROBLEM",
             "Трудности повторились",
         ),
-        ([observation("a", "NEUTRAL")], "PRACTICING", "пока недостаточно"),
-        ([observation("a", completion="PENDING")], "NO_DATA", "Нет завершённых"),
-        ([observation("a", gameRunId="other")], "NO_DATA", "Нет завершённых"),
-        ([observation("a"), observation("a")], "PRACTICING", "пока недостаточно"),
+        ([observation("a", "NEUTRAL")], "PRACTICING", "обычный этап"),
+        ([observation("a", completion="PENDING")], "NO_DATA", "Завершённых игровых ситуаций"),
+        ([observation("a", gameRunId="other")], "NO_DATA", "Завершённых игровых ситуаций"),
+        ([observation("a"), observation("a")], "PRACTICING", "обычный этап"),
         (
             [observation("a"), observation("a", "DIFFICULTY"), observation("b", "DIFFICULTY")],
             "HAS_PROBLEM",
