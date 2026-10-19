@@ -1,14 +1,16 @@
 import asyncio
-from collections.abc import Iterator
+from collections.abc import AsyncIterator
 from contextlib import AbstractAsyncContextManager
 from typing import Any, Self
 from uuid import uuid4
 
 import pytest
 from prometheus_client import CollectorRegistry
+from sqlalchemy import Select
 
 from src.infra.observability.aggregation import Aggregator
 from src.infra.observability.business_metrics import BusinessMetrics
+from src.infra.storages.postgres.models import SnapshotHeadModel
 from src.tests.helpers.worlds import legacy_archive_json, legacy_fact, world_snapshot_json
 
 
@@ -20,8 +22,12 @@ class _FakeResult:
     def __init__(self, rows: list[Any]) -> None:
         self._rows = rows
 
-    def __iter__(self) -> Iterator[Any]:
-        return iter(self._rows)
+    async def __aiter__(self) -> AsyncIterator[Any]:
+        for row in self._rows:
+            yield row
+
+    async def close(self) -> None:
+        pass
 
 
 class _FakeSession:
@@ -42,9 +48,9 @@ class _FakeSession:
     async def __aexit__(self, *args: object) -> None:
         return None
 
-    async def execute(self, _statement: object) -> _FakeResult:
+    async def stream(self, statement: Select[Any]) -> _FakeResult:
         self.execute_calls += 1
-        if self.execute_calls == 1:
+        if statement.column_descriptions[0]["entity"] is SnapshotHeadModel:
             return _FakeResult(self._heads)
         return _FakeResult(self._projections)
 
