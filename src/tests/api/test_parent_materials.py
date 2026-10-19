@@ -84,7 +84,7 @@ class TestParentMaterialsAPI(APIFixture, ContainerFixture):
         assert response.status_code == 200
         assert response.json() == {
             "schemaVersion": 1,
-            "contentVersion": "2026-09-29-v1",
+            "contentVersion": "2026-10-19-v2",
             "publicationStatus": "PUBLISHED",
             "skills": [
                 {"skillId": skill_id, **materials}

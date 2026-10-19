@@ -379,7 +379,16 @@ async def query_skills(client: AsyncClient, payload: dict[str, Any]) -> dict[str
 def assert_skill_response(
     response: dict[str, Any], *, run_id: str, sequence: int, statuses: dict[str, str]
 ) -> None:
-    assert response == {
+    for skill in response["skills"]:
+        assert isinstance(skill["assessmentReason"], str)
+        assert skill["assessmentReason"].strip()
+    assert {
+        **response,
+        "skills": [
+            {key: value for key, value in skill.items() if key != "assessmentReason"}
+            for skill in response["skills"]
+        ],
+    } == {
         "schemaVersion": 1,
         "gameRunId": run_id,
         "basedOnHistorySequence": sequence,
@@ -409,9 +418,13 @@ async def assert_persisted_skills(
     policy_version, sequence, skills = row
     assert policy_version == "skills-mvp-v1"
     assert sequence == payload["throughHistorySequence"]
-    assert skills == [
-        {"skillId": skill_id, "status": status} for skill_id, status in statuses.items()
-    ]
+    for skill in skills:
+        assert isinstance(skill["assessmentReason"], str)
+        assert skill["assessmentReason"].strip()
+    assert [
+        {key: value for key, value in skill.items() if key != "assessmentReason"}
+        for skill in skills
+    ] == [{"skillId": skill_id, "status": status} for skill_id, status in statuses.items()]
 
 
 async def test_android_upload_persists_all_skill_statuses_before_query(
