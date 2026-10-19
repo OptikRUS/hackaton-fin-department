@@ -177,6 +177,17 @@ class TestGetParentReportAPI(APIFixture, ContainerFixture):
             "summary": "Пока мало данных.",
             "evidence": [],
         }
+        counts = {
+            "observedEpisodes": 6,
+            "completedEpisodes": 6,
+            "supportedEpisodes": 5,
+            "difficultyEpisodes": 1,
+            "neutralEpisodes": 0,
+            "pendingEpisodes": 0,
+            "incompleteEpisodes": 0,
+            "supportedWithoutGameHints": 5,
+            "assistedEpisodes": 0,
+        }
         report = self.use_case.execute.return_value
         self.use_case.execute.return_value = replace(
             report,
@@ -185,6 +196,7 @@ class TestGetParentReportAPI(APIFixture, ContainerFixture):
                     report.skill_statuses[0],
                     explanation=explanation,
                     assessment_reason="Два успеха",
+                    observation_counts=counts,
                 ),
                 *report.skill_statuses[1:],
             ),
@@ -195,6 +207,8 @@ class TestGetParentReportAPI(APIFixture, ContainerFixture):
         assert response.status_code == codes.OK
         assert response.json()["skills"][0]["explanation"] == explanation
         assert response.json()["skills"][0]["assessmentReason"] == "Два успеха"
+        assert response.json()["skills"][0]["observationCounts"] == counts
+        assert "observationCounts" not in response.json()["skills"][1]
         assert "assessmentReason" not in response.json()["skills"][1]
         assert "explanation" not in response.json()["skills"][1]
 
@@ -224,12 +238,17 @@ class TestGetParentReportAPI(APIFixture, ContainerFixture):
             "status",
             "explanation",
             "assessmentReason",
+            "observationCounts",
             "isMastered",
             "materialsAvailable",
             *material_types,
         }
         assert set(schema["properties"]) == expected_fields
-        assert set(schema["required"]) == expected_fields - {"explanation", "assessmentReason"}
+        assert set(schema["required"]) == expected_fields - {
+            "explanation",
+            "assessmentReason",
+            "observationCounts",
+        }
         for field, field_type in material_types.items():
             assert schema["properties"][field]["type"] == field_type
             if field_type == "array":

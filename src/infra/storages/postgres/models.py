@@ -323,6 +323,9 @@ class SkillAssessmentModel(Base):
                     policy_version=self.policy_version,
                     explanation=cast("dict[str, object] | None", skill.get("explanation")),
                     assessment_reason=cast("str | None", skill.get("assessmentReason")),
+                    observation_counts=cast(
+                        "dict[str, int] | None", skill.get("observationCounts")
+                    ),
                 )
                 for skill in self.skills
             ),
@@ -339,6 +342,11 @@ class SkillAssessmentModel(Base):
                 {
                     "skillId": skill.skill_id,
                     "status": skill.status,
+                    **(
+                        {"observationCounts": skill.observation_counts}
+                        if skill.observation_counts is not None
+                        else {}
+                    ),
                     **({"explanation": skill.explanation} if skill.explanation is not None else {}),
                     **(
                         {"assessmentReason": skill.assessment_reason}

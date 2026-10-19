@@ -18,6 +18,7 @@ class ParentSkillStatus:
     status: str
     explanation: dict[str, Any] | None = None
     assessment_reason: str | None = None
+    observation_counts: dict[str, int] | None = None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

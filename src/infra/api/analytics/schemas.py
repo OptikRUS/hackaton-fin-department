@@ -168,7 +168,23 @@ class SkillAssessmentsRequest(StrictBoundaryModel):
     schema_version: Literal[1] = 1
 
 
+class ObservationCountsResponse(StrictBoundaryModel):
+    observed_episodes: Annotated[int, Field(ge=0, strict=True)]
+    completed_episodes: Annotated[int, Field(ge=0, strict=True)]
+    supported_episodes: Annotated[int, Field(ge=0, strict=True)]
+    difficulty_episodes: Annotated[int, Field(ge=0, strict=True)]
+    neutral_episodes: Annotated[int, Field(ge=0, strict=True)]
+    pending_episodes: Annotated[int, Field(ge=0, strict=True)]
+    incomplete_episodes: Annotated[int, Field(ge=0, strict=True)]
+    supported_without_game_hints: Annotated[int, Field(ge=0, strict=True)]
+    assisted_episodes: Annotated[int, Field(ge=0, strict=True)]
+
+
 class SkillAssessmentResponse(BoundaryModel):
+    observation_counts: ObservationCountsResponse | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     skill_id: SkillId
     status: Literal["MASTERED", "PRACTICING", "NO_DATA", "HAS_PROBLEM"]
     policy_version: str
@@ -201,6 +217,7 @@ class SkillAssessmentsResponse(BoundaryModel):
                     "status": skill.status,
                     "policyVersion": skill.policy_version,
                     "assessmentReason": skill.assessment_reason,
+                    "observationCounts": skill.observation_counts,
                     "explanation": supported_explanation(skill.explanation),
                 })
                 for skill in assessment.skills

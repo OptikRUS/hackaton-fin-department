@@ -4,7 +4,11 @@ from typing import Self
 from pydantic import Field
 
 from src.core.parents.schemas import ParentReport
-from src.infra.api.analytics.schemas import SkillExplanation, supported_explanation
+from src.infra.api.analytics.schemas import (
+    ObservationCountsResponse,
+    SkillExplanation,
+    supported_explanation,
+)
 from src.infra.api.boundary import BoundaryModel
 from src.infra.api.parents.skill_content import ParentMaterialsResponse
 
@@ -26,6 +30,10 @@ class ParentPetResponse(BoundaryModel):
 
 
 class SkillResponse(BoundaryModel):
+    observation_counts: ObservationCountsResponse | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     id: str
     title: str
     status: SkillStatus
@@ -71,6 +79,11 @@ class ParentResponse(BoundaryModel):
                     status=status,
                     explanation=supported_explanation(saved.explanation),
                     assessment_reason=saved.assessment_reason,
+                    observation_counts=(
+                        ObservationCountsResponse.parse(saved.observation_counts)
+                        if saved.observation_counts is not None
+                        else None
+                    ),
                     is_mastered=(
                         None if status == SkillStatus.NO_DATA else status == SkillStatus.MASTERED
                     ),

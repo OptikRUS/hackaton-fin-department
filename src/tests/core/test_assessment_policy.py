@@ -219,3 +219,58 @@ def test_other_game_run_does_not_contribute_evidence() -> None:
     )
 
     assert result.skills[0].status == "NO_DATA"
+
+
+def test_counts_include_five_successes_and_one_difficulty() -> None:
+    result = calculate_assessments(
+        game_run_id="run-1",
+        based_on_history_sequence=20,
+        observations=[observation(str(i)) for i in range(5)]
+        + [observation("difficulty", outcome="DIFFICULTY")],
+    )
+    assert result.skills[0].observation_counts == {
+        "observedEpisodes": 6,
+        "completedEpisodes": 6,
+        "supportedEpisodes": 5,
+        "difficultyEpisodes": 1,
+        "neutralEpisodes": 0,
+        "pendingEpisodes": 0,
+        "incompleteEpisodes": 0,
+        "supportedWithoutGameHints": 5,
+        "assistedEpisodes": 0,
+    }
+    assert result.skills[0].status == "MASTERED"
+
+
+def test_counts_use_all_latest_current_run_observations_without_eligibility_filter() -> None:
+    observations = [
+        observation("replaced"),
+        observation("replaced", completion="PENDING", outcome="INSUFFICIENT_DATA"),
+        observation("ineligible", eligibility="NOT_ELIGIBLE", assistance=("HINT",)),
+        observation("neutral", outcome="NEUTRAL", assistance=("ADULT_REPORTED",)),
+        observation("incomplete", outcome="INSUFFICIENT_DATA"),
+        observation("info", assistance=("INFORMATION_ONLY",)),
+        observation("other-skill", skill="FIN-02"),
+        {**observation("other-run"), "gameRunId": "other"},
+    ]
+    result = calculate_assessments(
+        game_run_id="run-1",
+        based_on_history_sequence=20,
+        observations=observations,
+    )
+    assert result.skills[0].observation_counts == {
+        "observedEpisodes": 5,
+        "completedEpisodes": 3,
+        "supportedEpisodes": 2,
+        "difficultyEpisodes": 0,
+        "neutralEpisodes": 1,
+        "pendingEpisodes": 1,
+        "incompleteEpisodes": 2,
+        "supportedWithoutGameHints": 1,
+        "assistedEpisodes": 2,
+    }
+    assert result.skills[0].status == "PRACTICING"
+    assert result.skills[1].observation_counts is not None
+    assert result.skills[2].observation_counts is not None
+    assert result.skills[1].observation_counts["observedEpisodes"] == 1
+    assert result.skills[2].observation_counts["observedEpisodes"] == 0

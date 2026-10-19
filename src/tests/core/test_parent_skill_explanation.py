@@ -22,6 +22,17 @@ async def test_parent_report_uses_assessment_for_latest_snapshot_run() -> None:
         "summary": "Есть наблюдение.",
         "evidence": [],
     }
+    counts = {
+        "observedEpisodes": 6,
+        "completedEpisodes": 6,
+        "supportedEpisodes": 5,
+        "difficultyEpisodes": 1,
+        "neutralEpisodes": 0,
+        "pendingEpisodes": 0,
+        "incompleteEpisodes": 0,
+        "supportedWithoutGameHints": 5,
+        "assistedEpisodes": 0,
+    }
     profile_storage = AsyncMock(spec=ProfileStorage)
     profile_storage.get_profile.return_value = factory.profiles.registered_profile(
         profile_id=profile_id, device_id=device_id
@@ -36,7 +47,7 @@ async def test_parent_report_uses_assessment_for_latest_snapshot_run() -> None:
         assessment,
         game_run_id="current-run",
         skills=(
-            replace(assessment.skills[0], explanation=explanation),
+            replace(assessment.skills[0], explanation=explanation, observation_counts=counts),
             *assessment.skills[1:],
         ),
     )
@@ -54,3 +65,6 @@ async def test_parent_report_uses_assessment_for_latest_snapshot_run() -> None:
     assert report.skill_statuses[0].status == "PRACTICING"
     assert report.skill_statuses[0].explanation == explanation
     assert report.skill_statuses[1].explanation is None
+
+    assert report.skill_statuses[0].observation_counts == counts
+    assert report.skill_statuses[1].observation_counts is None

@@ -20,8 +20,11 @@ def calculate_assessments(
         for observation in observations
         if observation["gameRunId"] == game_run_id
     }
+    all_by_skill: dict[str, list[dict[str, Any]]] = {skill: [] for skill in _SKILL_IDS}
     suitable_by_skill: dict[str, list[dict[str, Any]]] = {skill: [] for skill in _SKILL_IDS}
     for observation in latest.values():
+        if observation["skill"] in all_by_skill:
+            all_by_skill[observation["skill"]].append(observation)
         if (
             observation["skill"] in suitable_by_skill
             and observation["completion"] == "COMPLETE"
@@ -33,7 +36,12 @@ def calculate_assessments(
         game_run_id=game_run_id,
         based_on_history_sequence=based_on_history_sequence,
         skills=tuple(
-            _assessment(skill, suitable_by_skill[skill], (explanations or {}).get(skill))
+            _assessment(
+                skill,
+                suitable_by_skill[skill],
+                (explanations or {}).get(skill),
+                all_by_skill[skill],
+            )
             for skill in _SKILL_IDS
         ),
     )
@@ -43,6 +51,7 @@ def _assessment(
     skill: str,
     observations: list[dict[str, Any]],
     explanation: dict[str, Any] | None,
+    all_observations: list[dict[str, Any]],
 ) -> SkillAssessment:
     status, reason = _decision(observations)
     return SkillAssessment(
@@ -51,6 +60,7 @@ def _assessment(
         policy_version=POLICY_VERSION,
         explanation=explanation,
         assessment_reason=reason,
+        observation_counts=_observation_counts(all_observations),
     )
 
 
@@ -90,3 +100,24 @@ def _decision(observations: list[dict[str, Any]]) -> tuple[str, str]:
         "Этих результатов пока недостаточно для статуса «Освоен» или «Есть трудности» "
         "по текущему правилу игры. Ребёнок продолжает тренироваться."
     )
+
+
+def _observation_counts(observations: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "observedEpisodes": len(observations),
+        "completedEpisodes": sum(
+            o["completion"] == "COMPLETE" and o["eligibility"] == "ELIGIBLE" for o in observations
+        ),
+        "supportedEpisodes": sum(o["outcome"] == "SUPPORTED" for o in observations),
+        "difficultyEpisodes": sum(o["outcome"] == "DIFFICULTY" for o in observations),
+        "neutralEpisodes": sum(o["outcome"] == "NEUTRAL" for o in observations),
+        "pendingEpisodes": sum(o["completion"] == "PENDING" for o in observations),
+        "incompleteEpisodes": sum(o["outcome"] == "INSUFFICIENT_DATA" for o in observations),
+        "supportedWithoutGameHints": sum(
+            o["outcome"] == "SUPPORTED" and all(a == "INFORMATION_ONLY" for a in o["assistance"])
+            for o in observations
+        ),
+        "assistedEpisodes": sum(
+            any(a != "INFORMATION_ONLY" for a in o["assistance"]) for o in observations
+        ),
+    }

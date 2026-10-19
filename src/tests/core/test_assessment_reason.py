@@ -1,3 +1,4 @@
+import json
 from typing import Any
 from uuid import UUID
 
@@ -109,3 +110,47 @@ def test_old_stored_assessment_has_no_invented_reason() -> None:
     assert '"assessmentReason"' not in SkillAssessmentsResponse.from_domain(
         assessment=result
     ).model_dump_json(by_alias=True)
+
+
+def test_counts_survive_json_storage_and_analytics_response() -> None:
+    result = calculate_assessments(
+        game_run_id="run-1",
+        based_on_history_sequence=9,
+        observations=[observation("a"), observation("b", "DIFFICULTY")],
+    )
+    expected = {
+        "observedEpisodes": 2,
+        "completedEpisodes": 2,
+        "supportedEpisodes": 1,
+        "difficultyEpisodes": 1,
+        "neutralEpisodes": 0,
+        "pendingEpisodes": 0,
+        "incompleteEpisodes": 0,
+        "supportedWithoutGameHints": 1,
+        "assistedEpisodes": 0,
+    }
+    model = SkillAssessmentModel.from_domain(profile_id=UUID(int=1), assessment=result)
+    model.skills = json.loads(json.dumps(model.skills))
+    assert model.skills[0]["observationCounts"] == expected
+    restored = model.to_domain()
+    assert restored == result
+    payload = SkillAssessmentsResponse.from_domain(assessment=restored).model_dump(by_alias=True)
+    assert payload["skills"][0]["observationCounts"] == expected
+
+
+def test_legacy_assessment_omits_unknown_counts() -> None:
+    model = SkillAssessmentModel(
+        profile_id=UUID(int=1),
+        game_run_id="run-1",
+        policy_version="old",
+        based_on_history_sequence=7,
+        skills=[{"skillId": f"FIN-{i:02}", "status": "PRACTICING"} for i in range(1, 13)],
+    )
+    restored = model.to_domain()
+    assert all(skill.observation_counts is None for skill in restored.skills)
+    assert (
+        "observationCounts"
+        not in SkillAssessmentsResponse.from_domain(
+            assessment=restored,
+        ).model_dump(by_alias=True)["skills"][0]
+    )

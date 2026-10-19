@@ -376,6 +376,29 @@ async def query_skills(client: AsyncClient, payload: dict[str, Any]) -> dict[str
     return response.json()
 
 
+def expected_fixture_counts(skill_id: str, status: str) -> dict[str, int]:
+    # These fixtures contain only complete, eligible, unassisted question outcomes.
+    supported = 0
+    difficulty = 0
+    if skill_id == "FIN-01" and status == "MASTERED":
+        supported = 2
+    elif skill_id == "FIN-11" and status == "HAS_PROBLEM":
+        difficulty = 2
+    elif skill_id == "FIN-12":
+        supported = {"NO_DATA": 0, "PRACTICING": 1, "MASTERED": 2}[status]
+    return {
+        "observedEpisodes": supported + difficulty,
+        "completedEpisodes": supported + difficulty,
+        "supportedEpisodes": supported,
+        "difficultyEpisodes": difficulty,
+        "neutralEpisodes": 0,
+        "pendingEpisodes": 0,
+        "incompleteEpisodes": 0,
+        "supportedWithoutGameHints": supported,
+        "assistedEpisodes": 0,
+    }
+
+
 def assert_skill_response(
     response: dict[str, Any], *, run_id: str, sequence: int, statuses: dict[str, str]
 ) -> None:
@@ -393,7 +416,12 @@ def assert_skill_response(
         "gameRunId": run_id,
         "basedOnHistorySequence": sequence,
         "skills": [
-            {"skillId": skill_id, "status": status, "policyVersion": "skills-mvp-v1"}
+            {
+                "skillId": skill_id,
+                "status": status,
+                "policyVersion": "skills-mvp-v1",
+                "observationCounts": expected_fixture_counts(skill_id, status),
+            }
             for skill_id, status in statuses.items()
         ],
     }
@@ -424,7 +452,14 @@ async def assert_persisted_skills(
     assert [
         {key: value for key, value in skill.items() if key != "assessmentReason"}
         for skill in skills
-    ] == [{"skillId": skill_id, "status": status} for skill_id, status in statuses.items()]
+    ] == [
+        {
+            "skillId": skill_id,
+            "status": status,
+            "observationCounts": expected_fixture_counts(skill_id, status),
+        }
+        for skill_id, status in statuses.items()
+    ]
 
 
 async def test_android_upload_persists_all_skill_statuses_before_query(

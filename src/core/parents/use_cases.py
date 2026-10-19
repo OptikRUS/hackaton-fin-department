@@ -48,6 +48,7 @@ class GetParentReportUseCase(UseCase):
                     status=saved.status if saved is not None else "NO_DATA",
                     explanation=saved.explanation if saved is not None else None,
                     assessment_reason=saved.assessment_reason if saved is not None else None,
+                    observation_counts=saved.observation_counts if saved is not None else None,
                 )
             )
         return ParentReport(
