@@ -14,7 +14,7 @@
 | src/core/analytics/assessment\_policy.py                                |       31 |        0 |    100% |           |
 | src/core/analytics/enums.py                                             |       66 |        0 |    100% |           |
 | src/core/analytics/exceptions.py                                        |       17 |        0 |    100% |           |
-| src/core/analytics/schemas.py                                           |      222 |       39 |     82% |51, 55, 61, 63, 70, 76, 83, 88, 107, 109, 384, 413, 417, 419, 429, 440-442, 444-453, 459, 461, 469, 483, 507, 539, 550, 566, 591, 593, 603, 611, 630, 640, 646, 651, 665, 670 |
+| src/core/analytics/schemas.py                                           |      222 |       39 |     82% |51, 55, 61, 63, 70, 76, 83, 88, 107, 109, 384, 413, 417, 419, 429, 440-442, 444-453, 459, 461, 469, 483, 508, 540, 551, 567, 592, 594, 604, 612, 631, 641, 647, 652, 666, 671 |
 | src/core/analytics/storages.py                                          |       32 |        0 |    100% |           |
 | src/core/analytics/use\_cases.py                                        |       72 |        6 |     92% |48-49, 100-106 |
 | src/core/exceptions.py                                                  |        5 |        0 |    100% |           |
