@@ -4,6 +4,7 @@ from uuid import UUID
 import pytest
 from sqlalchemy import delete
 
+from src.core.analytics.assessment_policy import calculate_assessments
 from src.core.analytics.schemas import AnalyticsUploadParams
 from src.core.analytics.use_cases import UploadAnalyticsUseCase
 from src.infra.storages.postgres.analytics_storage import PostgresAnalyticsStorage
@@ -15,6 +16,20 @@ class TestPostgresAnalyticsStorage(FactoryFixture, PostgresFixture):
     @pytest.fixture(autouse=True)
     async def setup(self, analytics_storage: PostgresAnalyticsStorage) -> None:
         self.storage = analytics_storage
+
+    async def test_server_reason_round_trips_without_client_explanation(self) -> None:
+        profile_id = UUID("b09682a3-1421-488c-a3e1-58b18ac94129")
+        assessment = calculate_assessments(
+            game_run_id="run-1",
+            based_on_history_sequence=3,
+            observations=[],
+        )
+        await self.storage.save_assessment(profile_id=profile_id, assessment=assessment)
+        restored = await self.storage.get_assessment(profile_id=profile_id, game_run_id="run-1")
+        assert restored == assessment
+        assert restored is not None
+        assert all(skill.assessment_reason is not None for skill in restored.skills)
+        assert all(skill.explanation is None for skill in restored.skills)
 
     async def test_snapshot_archive_read_returns_exact_saved_json(self) -> None:
         profile_id = UUID("b09682a3-1421-488c-a3e1-58b18ac94121")

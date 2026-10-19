@@ -246,6 +246,11 @@ class PostgresAnalyticsStorage(AnalyticsStorage):
                     "skillId": skill.skill_id,
                     "status": skill.status,
                     **({"explanation": skill.explanation} if skill.explanation is not None else {}),
+                    **(
+                        {"assessmentReason": skill.assessment_reason}
+                        if skill.assessment_reason is not None
+                        else {}
+                    ),
                 }
                 for skill in assessment.skills
             ],

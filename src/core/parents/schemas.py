@@ -17,6 +17,7 @@ class ParentSkillStatus:
     skill_id: str
     status: str
     explanation: dict[str, Any] | None = None
+    assessment_reason: str | None = None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

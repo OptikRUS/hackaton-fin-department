@@ -181,7 +181,11 @@ class TestGetParentReportAPI(APIFixture, ContainerFixture):
         self.use_case.execute.return_value = replace(
             report,
             skill_statuses=(
-                replace(report.skill_statuses[0], explanation=explanation),
+                replace(
+                    report.skill_statuses[0],
+                    explanation=explanation,
+                    assessment_reason="Два успеха",
+                ),
                 *report.skill_statuses[1:],
             ),
         )
@@ -190,6 +194,8 @@ class TestGetParentReportAPI(APIFixture, ContainerFixture):
 
         assert response.status_code == codes.OK
         assert response.json()["skills"][0]["explanation"] == explanation
+        assert response.json()["skills"][0]["assessmentReason"] == "Два успеха"
+        assert "assessmentReason" not in response.json()["skills"][1]
         assert "explanation" not in response.json()["skills"][1]
 
     async def test_accepts_saved_device_id(self) -> None:
@@ -217,12 +223,13 @@ class TestGetParentReportAPI(APIFixture, ContainerFixture):
             "title",
             "status",
             "explanation",
+            "assessmentReason",
             "isMastered",
             "materialsAvailable",
             *material_types,
         }
         assert set(schema["properties"]) == expected_fields
-        assert set(schema["required"]) == expected_fields - {"explanation"}
+        assert set(schema["required"]) == expected_fields - {"explanation", "assessmentReason"}
         for field, field_type in material_types.items():
             assert schema["properties"][field]["type"] == field_type
             if field_type == "array":

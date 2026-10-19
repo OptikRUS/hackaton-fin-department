@@ -33,20 +33,36 @@ def calculate_assessments(
         game_run_id=game_run_id,
         based_on_history_sequence=based_on_history_sequence,
         skills=tuple(
-            SkillAssessment(
-                skill_id=skill,
-                status=_status(suitable_by_skill[skill]),
-                policy_version=POLICY_VERSION,
-                explanation=(explanations or {}).get(skill),
-            )
+            _assessment(skill, suitable_by_skill[skill], (explanations or {}).get(skill))
             for skill in _SKILL_IDS
         ),
     )
 
 
-def _status(observations: list[dict[str, Any]]) -> str:
+def _assessment(
+    skill: str,
+    observations: list[dict[str, Any]],
+    explanation: dict[str, Any] | None,
+) -> SkillAssessment:
+    status, reason = _decision(observations)
+    return SkillAssessment(
+        skill_id=skill,
+        status=status,
+        policy_version=POLICY_VERSION,
+        explanation=explanation,
+        assessment_reason=reason,
+    )
+
+
+def _decision(observations: list[dict[str, Any]]) -> tuple[str, str]:
     if not observations:
-        return "NO_DATA"
+        return (
+            "NO_DATA",
+            (
+                "Нет завершённых ситуаций, подходящих для оценки этого навыка. "
+                "Это не означает, что ребёнок им не владеет."
+            ),
+        )
     supported = [item for item in observations if item["outcome"] == "SUPPORTED"]
     difficulty_count = sum(item["outcome"] == "DIFFICULTY" for item in observations)
     # This records assistance in the evidence; adultHelpKnown does not establish its absence.
@@ -55,7 +71,22 @@ def _status(observations: list[dict[str, Any]]) -> str:
         for item in supported
     )
     if supported_without_assistance >= _MIN_REPEATED_OUTCOMES and len(supported) > difficulty_count:
-        return "MASTERED"
+        return "MASTERED", (
+            f"Успешных ситуаций без игровых подсказок: {supported_without_assistance}. "
+            f"Всего успешных: {len(supported)}, с трудностями: {difficulty_count}. "
+            "Есть минимум два успеха без игровых подсказок, а успехов больше, чем трудностей. "
+            "По текущему правилу игры навык отмечен как освоенный. "
+            "Помощь взрослого могла быть не записана."
+        )
     if difficulty_count >= _MIN_REPEATED_OUTCOMES and difficulty_count > len(supported):
-        return "HAS_PROBLEM"
-    return "PRACTICING"
+        return "HAS_PROBLEM", (
+            "Трудности повторились минимум в двух завершённых ситуациях. "
+            f"Ситуаций с трудностями: {difficulty_count}, успешных: {len(supported)}. "
+            "Трудностей больше, чем успехов, поэтому по текущему правилу игры отмечены трудности."
+        )
+    return "PRACTICING", (
+        f"Успешных ситуаций: {len(supported)}, из них без игровых подсказок: "
+        f"{supported_without_assistance}; с трудностями: {difficulty_count}. "
+        "Этих результатов пока недостаточно для статуса «Освоен» или «Есть трудности» "
+        "по текущему правилу игры. Ребёнок продолжает тренироваться."
+    )

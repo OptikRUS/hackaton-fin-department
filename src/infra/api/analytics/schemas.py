@@ -172,6 +172,12 @@ class SkillAssessmentResponse(BoundaryModel):
     skill_id: SkillId
     status: Literal["MASTERED", "PRACTICING", "NO_DATA", "HAS_PROBLEM"]
     policy_version: str
+    assessment_reason: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=600,
+        exclude_if=lambda value: value is None,
+    )
     explanation: SkillExplanation | None = Field(
         default=None,
         exclude_if=lambda value: value is None,
@@ -194,6 +200,7 @@ class SkillAssessmentsResponse(BoundaryModel):
                     "skillId": skill.skill_id,
                     "status": skill.status,
                     "policyVersion": skill.policy_version,
+                    "assessmentReason": skill.assessment_reason,
                     "explanation": supported_explanation(skill.explanation),
                 })
                 for skill in assessment.skills

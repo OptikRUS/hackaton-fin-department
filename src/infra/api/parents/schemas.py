@@ -29,6 +29,12 @@ class SkillResponse(BoundaryModel):
     id: str
     title: str
     status: SkillStatus
+    assessment_reason: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=600,
+        exclude_if=lambda value: value is None,
+    )
     explanation: SkillExplanation | None = Field(
         default=None,
         exclude_if=lambda value: value is None,
@@ -64,6 +70,7 @@ class ParentResponse(BoundaryModel):
                     title=title,
                     status=status,
                     explanation=supported_explanation(saved.explanation),
+                    assessment_reason=saved.assessment_reason,
                     is_mastered=(
                         None if status == SkillStatus.NO_DATA else status == SkillStatus.MASTERED
                     ),
