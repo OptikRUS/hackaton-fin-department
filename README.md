@@ -94,7 +94,7 @@
 | src/infra/migrations/versions/0008\_analytics\_projection\_revisions.py |       21 |        0 |    100% |           |
 | src/infra/migrations/versions/\_\_init\_\_.py                           |        0 |        0 |    100% |           |
 | src/infra/observability/\_\_init\_\_.py                                 |        0 |        0 |    100% |           |
-| src/infra/observability/aggregation.py                                  |       60 |        1 |     98% |       109 |
+| src/infra/observability/aggregation.py                                  |       83 |        0 |    100% |           |
 | src/infra/observability/business\_metrics.py                            |      439 |       44 |     90% |203, 275, 278, 290-298, 310-315, 832, 835-841, 851, 854-857, 860, 863-866, 876, 879, 882, 885, 888, 891, 894-896 |
 | src/infra/observability/metrics.py                                      |       14 |        0 |    100% |           |
 | src/infra/observability/tracing.py                                      |       12 |        0 |    100% |           |
@@ -107,7 +107,7 @@
 | src/infra/storages/postgres/profile\_storage.py                         |       25 |        0 |    100% |           |
 | src/infra/storages/postgres/rewards\_storage.py                         |       46 |        1 |     98% |        84 |
 | src/infra/storages/postgres/snapshot\_storage.py                        |       27 |        0 |    100% |           |
-| **TOTAL**                                                               | **2800** |  **162** | **94%** |           |
+| **TOTAL**                                                               | **2823** |  **161** | **94%** |           |
 
 
 ## Setup coverage badge
