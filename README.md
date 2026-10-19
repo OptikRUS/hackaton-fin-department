@@ -11,17 +11,17 @@
 | src/core/\_\_init\_\_.py                                                |        0 |        0 |    100% |           |
 | src/core/analytics/\_\_init\_\_.py                                      |        0 |        0 |    100% |           |
 | src/core/analytics/assessment\_evidence.py                              |       36 |        1 |     97% |        32 |
-| src/core/analytics/assessment\_policy.py                                |       23 |        0 |    100% |           |
+| src/core/analytics/assessment\_policy.py                                |       26 |        0 |    100% |           |
 | src/core/analytics/enums.py                                             |       66 |        0 |    100% |           |
 | src/core/analytics/exceptions.py                                        |       17 |        0 |    100% |           |
-| src/core/analytics/schemas.py                                           |      220 |       39 |     82% |51, 55, 61, 63, 70, 76, 83, 88, 107, 109, 384, 413, 417, 419, 429, 440-442, 444-453, 459, 461, 469, 483, 507, 539, 550, 566, 591, 593, 603, 611, 630, 640, 646, 651, 665, 670 |
+| src/core/analytics/schemas.py                                           |      221 |       39 |     82% |51, 55, 61, 63, 70, 76, 83, 88, 107, 109, 384, 413, 417, 419, 429, 440-442, 444-453, 459, 461, 469, 483, 507, 539, 550, 566, 591, 593, 603, 611, 630, 640, 646, 651, 665, 670 |
 | src/core/analytics/storages.py                                          |       32 |        0 |    100% |           |
 | src/core/analytics/use\_cases.py                                        |       72 |        6 |     92% |48-49, 100-106 |
 | src/core/exceptions.py                                                  |        5 |        0 |    100% |           |
 | src/core/metrics.py                                                     |       18 |        0 |    100% |           |
 | src/core/parents/\_\_init\_\_.py                                        |        0 |        0 |    100% |           |
 | src/core/parents/exceptions.py                                          |        3 |        0 |    100% |           |
-| src/core/parents/schemas.py                                             |        9 |        0 |    100% |           |
+| src/core/parents/schemas.py                                             |       10 |        0 |    100% |           |
 | src/core/parents/use\_cases.py                                          |       49 |        0 |    100% |           |
 | src/core/pets/\_\_init\_\_.py                                           |        0 |        0 |    100% |           |
 | src/core/pets/schemas.py                                                |        7 |        0 |    100% |           |
@@ -58,7 +58,7 @@
 | src/infra/api/\_\_init\_\_.py                                           |        0 |        0 |    100% |           |
 | src/infra/api/analytics/\_\_init\_\_.py                                 |        0 |        0 |    100% |           |
 | src/infra/api/analytics/endpoints.py                                    |       16 |        0 |    100% |           |
-| src/infra/api/analytics/schemas.py                                      |       64 |        4 |     94% |54-55, 102-103 |
+| src/infra/api/analytics/schemas.py                                      |       65 |        4 |     94% |54-55, 102-103 |
 | src/infra/api/app.py                                                    |       29 |        0 |    100% |           |
 | src/infra/api/boundary.py                                               |       17 |        0 |    100% |           |
 | src/infra/api/common/\_\_init\_\_.py                                    |        0 |        0 |    100% |           |
@@ -66,7 +66,7 @@
 | src/infra/api/exceptions.py                                             |       27 |        1 |     96% |        54 |
 | src/infra/api/parents/\_\_init\_\_.py                                   |        0 |        0 |    100% |           |
 | src/infra/api/parents/endpoints.py                                      |       16 |        0 |    100% |           |
-| src/infra/api/parents/schemas.py                                        |       28 |        0 |    100% |           |
+| src/infra/api/parents/schemas.py                                        |       29 |        0 |    100% |           |
 | src/infra/api/parents/skill\_content.py                                 |       50 |        0 |    100% |           |
 | src/infra/api/pets/\_\_init\_\_.py                                      |        0 |        0 |    100% |           |
 | src/infra/api/pets/endpoints.py                                         |       10 |        0 |    100% |           |
@@ -107,7 +107,7 @@
 | src/infra/storages/postgres/profile\_storage.py                         |       25 |        0 |    100% |           |
 | src/infra/storages/postgres/rewards\_storage.py                         |       46 |        1 |     98% |        84 |
 | src/infra/storages/postgres/snapshot\_storage.py                        |       27 |        0 |    100% |           |
-| **TOTAL**                                                               | **2793** |  **162** | **94%** |           |
+| **TOTAL**                                                               | **2800** |  **162** | **94%** |           |
 
 
 ## Setup coverage badge
