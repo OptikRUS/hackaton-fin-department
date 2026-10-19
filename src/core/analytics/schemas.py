@@ -486,7 +486,8 @@ class AnalyticsUploadParams:
         if value.get("_type") == "compare_amounts":
             return bool(
                 {"_type", "left", "right", "chosen"} <= value.keys()
-                and value.keys() <= {"_type", "left", "right", "chosen", "purpose"}
+                and value.keys() <= {"_type", "left", "right", "chosen", "purpose", "pickLarger"}
+                and ("pickLarger" not in value or type(value["pickLarger"]) is bool)
                 and all(
                     type(value[field]) is int and value[field] >= 0 for field in ("left", "right")
                 )
