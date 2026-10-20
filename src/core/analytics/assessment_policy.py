@@ -82,18 +82,21 @@ def _decision(observations: list[dict[str, Any]]) -> tuple[str, str]:
     )
     if supported_without_assistance >= _MIN_REPEATED_OUTCOMES and len(supported) > difficulty_count:
         return "MASTERED", (
-            f"У ребёнка минимум два успеха без игровых подсказок: успешных ситуаций {len(supported)}, "
+            "У ребёнка минимум два успеха без игровых подсказок: "
+            f"успешных ситуаций {len(supported)}, "
             f"с трудностями {difficulty_count}. Успехов больше, поэтому по правилу игры "
             "навык отмечен как освоенный. Помощь взрослого могла остаться незамеченной."
         )
     if difficulty_count >= _MIN_REPEATED_OUTCOMES and difficulty_count > len(supported):
         return "HAS_PROBLEM", (
-            f"Трудности повторились минимум в двух ситуациях: их {difficulty_count}, успешных {len(supported)}. "
+            f"Трудности повторились минимум в двух ситуациях: их {difficulty_count}, "
+            f"успешных {len(supported)}. "
             "Трудностей больше, поэтому по правилу игры отмечены трудности. "
             "Разберите одну из таких ситуаций вместе — это обычно помогает."
         )
     return "PRACTICING", (
-        f"Успешных ситуаций пока {len(supported)}, из них без подсказок {supported_without_assistance}, "
+        f"Успешных ситуаций пока {len(supported)}, "
+        f"из них без подсказок {supported_without_assistance}, "
         f"с трудностями {difficulty_count}. Для статуса «Освоен» или «Есть трудности» этого мало. "
         "Ребёнок тренируется — это обычный этап."
     )
