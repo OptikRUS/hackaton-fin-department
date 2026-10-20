@@ -92,6 +92,7 @@
 | src/infra/migrations/versions/0006\_reward\_application\_id\_text.py    |       11 |        0 |    100% |           |
 | src/infra/migrations/versions/0007\_analytics\_history\_ranges.py       |       40 |        4 |     90% |47, 56, 91-92 |
 | src/infra/migrations/versions/0008\_analytics\_projection\_revisions.py |       21 |        0 |    100% |           |
+| src/infra/migrations/versions/0009\_profile\_last\_sync.py              |       11 |        0 |    100% |           |
 | src/infra/migrations/versions/\_\_init\_\_.py                           |        0 |        0 |    100% |           |
 | src/infra/observability/\_\_init\_\_.py                                 |        0 |        0 |    100% |           |
 | src/infra/observability/aggregation.py                                  |       83 |        0 |    100% |           |
@@ -100,14 +101,14 @@
 | src/infra/observability/tracing.py                                      |       12 |        0 |    100% |           |
 | src/infra/storages/\_\_init\_\_.py                                      |        0 |        0 |    100% |           |
 | src/infra/storages/postgres/\_\_init\_\_.py                             |        0 |        0 |    100% |           |
-| src/infra/storages/postgres/analytics\_storage.py                       |       51 |        0 |    100% |           |
+| src/infra/storages/postgres/analytics\_storage.py                       |       52 |        0 |    100% |           |
 | src/infra/storages/postgres/config.py                                   |        4 |        0 |    100% |           |
-| src/infra/storages/postgres/models.py                                   |      157 |        1 |     99% |       258 |
+| src/infra/storages/postgres/models.py                                   |      158 |        1 |     99% |       259 |
 | src/infra/storages/postgres/pet\_storage.py                             |       12 |        0 |    100% |           |
 | src/infra/storages/postgres/profile\_storage.py                         |       25 |        0 |    100% |           |
 | src/infra/storages/postgres/rewards\_storage.py                         |       46 |        1 |     98% |        84 |
-| src/infra/storages/postgres/snapshot\_storage.py                        |       27 |        0 |    100% |           |
-| **TOTAL**                                                               | **2833** |  **161** | **94%** |           |
+| src/infra/storages/postgres/snapshot\_storage.py                        |       28 |        0 |    100% |           |
+| **TOTAL**                                                               | **2847** |  **161** | **94%** |           |
 
 
 ## Setup coverage badge
