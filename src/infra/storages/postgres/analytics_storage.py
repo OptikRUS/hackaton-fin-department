@@ -142,6 +142,13 @@ class PostgresAnalyticsStorage(AnalyticsStorage):
                 skills=params.skills,
             )
         )
+        await self.session.execute(
+            update(ProfileModel)
+            .where(ProfileModel.profile_id == params.profile_id)
+            .values(
+                last_synced_at=func.greatest(ProfileModel.last_synced_at, func.clock_timestamp())
+            )
+        )
 
     async def update_head(
         self,

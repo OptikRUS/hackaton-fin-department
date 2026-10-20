@@ -40,7 +40,7 @@ def test_projection_revisions_preserve_evidence_and_refuse_lossy_downgrade() -> 
             "(:profile_id, 'run-1', 4, 1, 10, 0, CAST(:facts AS jsonb), CAST(:skills AS jsonb))",
             {**profile, "facts": json.dumps(original), "skills": json.dumps(skills)},
         )
-        migrate("heads", dsn)
+        migrate("0008", dsn)
         rows = query(
             "SELECT revision, facts, skills FROM analytics_projections "
             "WHERE profile_id=:profile_id",

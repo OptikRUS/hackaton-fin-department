@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.snapshots.schemas import Snapshot, SnapshotHead, SnapshotUploadReceipt
 from src.core.snapshots.storages import SnapshotStorage
-from src.infra.storages.postgres.models import SnapshotHeadModel, SnapshotUploadModel
+from src.infra.storages.postgres.models import ProfileModel, SnapshotHeadModel, SnapshotUploadModel
 
 
 @dataclass(kw_only=True, slots=True)
@@ -69,6 +69,13 @@ class PostgresSnapshotStorage(SnapshotStorage):
                 .execution_options(populate_existing=True),
             )
         ).one()
+        await self.session.execute(
+            update(ProfileModel)
+            .where(ProfileModel.profile_id == snapshot.profile_id)
+            .values(
+                last_synced_at=func.greatest(ProfileModel.last_synced_at, func.clock_timestamp())
+            )
+        )
         return model.to_domain()
 
     async def insert_upload(self, *, upload: SnapshotUploadReceipt) -> SnapshotUploadReceipt:

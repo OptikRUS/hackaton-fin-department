@@ -167,6 +167,7 @@ class ProfileModel(Base):
     profile_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
     device_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     pet_json: Mapped[dict[str, str | None]] = mapped_column(JSON, nullable=False)
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     def to_domain(self) -> RegisteredProfile:
         return RegisteredProfile(
